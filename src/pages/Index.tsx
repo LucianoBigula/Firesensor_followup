@@ -4,7 +4,6 @@ import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -82,10 +81,6 @@ const Index = () => {
           </div>
           <FollowUpTable data={filteredData} />
         </div>
-
-        <footer className="mt-12 opacity-50">
-          <MadeWithDyad />
-        </footer>
       </div>
     </div>
   );
