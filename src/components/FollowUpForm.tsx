@@ -46,68 +46,73 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6">
+        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 shadow-lg shadow-red-900/20">
           <PlusCircle className="mr-2 h-4 w-4" /> Novo Follow-up
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-indigo-900">Registrar Novo Follow-up</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-white">Registrar Novo Follow-up</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="vendedor">Vendedor</Label>
+            <Label htmlFor="vendedor" className="text-zinc-400">Vendedor</Label>
             <Input 
               id="vendedor" 
               placeholder="Nome do vendedor" 
               required
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, vendedor: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dataEnvio">Data de Envio</Label>
+            <Label htmlFor="dataEnvio" className="text-zinc-400">Data de Envio</Label>
             <Input 
               id="dataEnvio" 
               type="date" 
               required
               value={formData.dataEnvio}
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, dataEnvio: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="proposta">Nº da Proposta</Label>
+            <Label htmlFor="proposta" className="text-zinc-400">Nº da Proposta</Label>
             <Input 
               id="proposta" 
               placeholder="Ex: 2024-001" 
               required
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, numeroProposta: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="integrador">Integrador</Label>
+            <Label htmlFor="integrador" className="text-zinc-400">Integrador</Label>
             <Input 
               id="integrador" 
               placeholder="Nome do integrador" 
               required
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, integrador: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="obra">Obra</Label>
+            <Label htmlFor="obra" className="text-zinc-400">Obra</Label>
             <Input 
               id="obra" 
               placeholder="Nome da obra" 
               required
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, obra: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <Label>Temperatura</Label>
+            <Label className="text-zinc-400">Temperatura</Label>
             <Select onValueChange={(v: Temperatura) => setFormData({...formData, temperatura: v})} defaultValue="Morna">
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectItem value="Quente">🔥 Quente</SelectItem>
                 <SelectItem value="Morna">⚖️ Morna</SelectItem>
                 <SelectItem value="Fria">❄️ Fria</SelectItem>
@@ -115,12 +120,12 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Expectativa</Label>
+            <Label className="text-zinc-400">Expectativa</Label>
             <Select onValueChange={(v: Expectativa) => setFormData({...formData, expectativa: v})} defaultValue="30 dias">
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectItem value="30 dias">30 dias</SelectItem>
                 <SelectItem value="60 dias">60 dias</SelectItem>
                 <SelectItem value="90 dias">90 dias</SelectItem>
@@ -130,23 +135,24 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="valor">Valor (R$)</Label>
+            <Label htmlFor="valor" className="text-zinc-400">Valor (R$)</Label>
             <Input 
               id="valor" 
               type="number" 
               step="0.01" 
               placeholder="0,00" 
               required
+              className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, valor: Number(e.target.value)})}
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label className="text-zinc-400">Status</Label>
             <Select onValueChange={(v: Status) => setFormData({...formData, status: v})} defaultValue="Em Andamento">
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectItem value="Ganha">✅ Ganha</SelectItem>
                 <SelectItem value="Perdida">❌ Perdida</SelectItem>
                 <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
@@ -155,12 +161,12 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Dia da Semana</Label>
+            <Label className="text-zinc-400">Dia da Semana</Label>
             <Select onValueChange={(v: DiaSemana) => setFormData({...formData, diaSemana: v})} defaultValue="Segunda">
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectItem value="Segunda">Segunda-feira</SelectItem>
                 <SelectItem value="Terça">Terça-feira</SelectItem>
                 <SelectItem value="Quarta">Quarta-feira</SelectItem>
@@ -170,12 +176,12 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Semana do Mês</Label>
+            <Label className="text-zinc-400">Semana do Mês</Label>
             <Select onValueChange={(v: SemanaMes) => setFormData({...formData, semanaMes: v})} defaultValue="Semana 1">
-              <SelectTrigger>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectItem value="Semana 1">Semana 1</SelectItem>
                 <SelectItem value="Semana 2">Semana 2</SelectItem>
                 <SelectItem value="Semana 3">Semana 3</SelectItem>
@@ -185,7 +191,7 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="col-span-2 pt-4">
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">Salvar Registro</Button>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">Salvar Registro</Button>
           </div>
         </form>
       </DialogContent>

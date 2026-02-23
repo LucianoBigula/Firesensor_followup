@@ -17,38 +17,38 @@ export const FollowUpStats = ({ data }: FollowUpStatsProps) => {
       title: "Valor Total",
       value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor),
       icon: TrendingUp,
-      color: "text-blue-600",
-      bg: "bg-blue-50"
+      color: "text-red-500",
+      bg: "bg-red-500/10"
     },
     {
       title: "Vendas Ganhas",
       value: ganhas,
       icon: CheckCircle2,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50"
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10"
     },
     {
       title: "Em Andamento",
       value: emAndamento,
       icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50"
+      color: "text-amber-500",
+      bg: "bg-amber-500/10"
     },
     {
       title: "Perdidas/Can.",
       value: perdidas,
       icon: XCircle,
-      color: "text-rose-600",
-      bg: "bg-rose-50"
+      color: "text-zinc-400",
+      bg: "bg-zinc-500/10"
     }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {stats.map((stat, index) => (
-        <Card key={index} className="border-none shadow-sm hover:shadow-md transition-shadow">
+        <Card key={index} className="bg-zinc-900 border-zinc-800 shadow-xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-zinc-400">
               {stat.title}
             </CardTitle>
             <div className={`${stat.bg} p-2 rounded-full`}>
@@ -56,7 +56,7 @@ export const FollowUpStats = ({ data }: FollowUpStatsProps) => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
+            <div className="text-2xl font-bold text-white">{stat.value}</div>
           </CardContent>
         </Card>
       ))}
