@@ -4,7 +4,7 @@ import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { LayoutDashboard, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const Index = () => {
@@ -27,13 +27,17 @@ const Index = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-900/20">
-              <LayoutDashboard className="text-white h-6 w-6" />
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
+              <img 
+                src="/Firesensor.png" 
+                alt="Firesensor Logo" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Follow-up de Vendas</h1>
-              <p className="text-zinc-400 text-sm">Acompanhamento estratégico de propostas</p>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Follow-up de Vendas</h1>
+              <p className="text-zinc-400 text-sm">Firesensor • Gestão Estratégica</p>
             </div>
           </div>
           
