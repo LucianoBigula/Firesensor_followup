@@ -56,6 +56,15 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
+            <Label htmlFor="vendedor">Vendedor</Label>
+            <Input 
+              id="vendedor" 
+              placeholder="Nome do vendedor" 
+              required
+              onChange={(e) => setFormData({...formData, vendedor: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="dataEnvio">Data de Envio</Label>
             <Input 
               id="dataEnvio" 

@@ -8,6 +8,7 @@ export interface FollowUp {
   id: string;
   dataEnvio: string;
   numeroProposta: string;
+  vendedor: string;
   integrador: string;
   obra: string;
   temperatura: Temperatura;

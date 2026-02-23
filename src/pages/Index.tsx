@@ -18,7 +18,8 @@ const Index = () => {
   const filteredData = followUps.filter(item => 
     item.integrador.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.obra.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase())
+    item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.vendedor.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -37,10 +38,10 @@ const Index = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="relative w-64">
+            <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
-                placeholder="Buscar proposta, obra..." 
+                placeholder="Buscar vendedor, proposta, obra..." 
                 className="pl-10 bg-white border-slate-200 rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
