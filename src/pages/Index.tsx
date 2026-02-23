@@ -1,18 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FollowUp } from "@/types/follow-up";
 import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
+import { FollowUpActions } from "@/components/FollowUpActions";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const Index = () => {
-  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  // Carregar dados iniciais do localStorage
+  const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
+    const saved = localStorage.getItem("firesensor_followups");
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Salvar no localStorage sempre que houver mudanças
+  useEffect(() => {
+    localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
+  }, [followUps]);
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => {
     setFollowUps([newFollowUp, ...followUps]);
+  };
+
+  const handleImportData = (newData: FollowUp[]) => {
+    setFollowUps(newData);
   };
 
   const filteredData = followUps.filter(item => 
@@ -41,16 +56,17 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="relative w-72">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
-                placeholder="Buscar vendedor, proposta, obra..." 
+                placeholder="Buscar..." 
                 className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full focus:ring-red-600"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <FollowUpActions data={followUps} onImport={handleImportData} />
             <FollowUpForm onAdd={handleAddFollowUp} />
           </div>
         </div>
