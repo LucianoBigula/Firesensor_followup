@@ -1,14 +1,17 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format } from "date-fns";
-import { User } from "lucide-react";
+import { User, Trash2 } from "lucide-react";
+import { showSuccess } from "@/utils/toast";
 
 interface FollowUpTableProps {
   data: FollowUp[];
+  onDelete: (id: string) => void;
 }
 
-export const FollowUpTable = ({ data }: FollowUpTableProps) => {
+export const FollowUpTable = ({ data, onDelete }: FollowUpTableProps) => {
   const getTempColor = (temp: string) => {
     switch (temp) {
       case 'Quente': return 'bg-red-500/20 text-red-400 border-red-500/30';
@@ -28,6 +31,13 @@ export const FollowUpTable = ({ data }: FollowUpTableProps) => {
     }
   };
 
+  const handleDelete = (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este registro?")) {
+      onDelete(id);
+      showSuccess("Registro removido com sucesso.");
+    }
+  };
+
   return (
     <div className="bg-zinc-900/50 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden">
       <Table>
@@ -42,12 +52,13 @@ export const FollowUpTable = ({ data }: FollowUpTableProps) => {
             <TableHead className="font-bold text-right text-zinc-300">Valor</TableHead>
             <TableHead className="font-bold text-zinc-300">Status</TableHead>
             <TableHead className="font-bold text-zinc-300">Atualização</TableHead>
+            <TableHead className="font-bold text-center text-zinc-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
             <TableRow className="border-zinc-800">
-              <TableCell colSpan={9} className="text-center py-12 text-zinc-500">
+              <TableCell colSpan={10} className="text-center py-12 text-zinc-500">
                 Nenhum registro encontrado. Comece adicionando um novo follow-up.
               </TableCell>
             </TableRow>
@@ -91,6 +102,16 @@ export const FollowUpTable = ({ data }: FollowUpTableProps) => {
                     <p className="font-medium text-zinc-300">{item.diaSemana}</p>
                     <p className="text-zinc-500">{item.semanaMes}</p>
                   </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

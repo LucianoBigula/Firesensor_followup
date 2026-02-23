@@ -25,6 +25,10 @@ const Index = () => {
     setFollowUps([newFollowUp, ...followUps]);
   };
 
+  const handleDeleteFollowUp = (id: string) => {
+    setFollowUps(followUps.filter(item => item.id !== id));
+  };
+
   const handleImportData = (newData: FollowUp[]) => {
     setFollowUps(newData);
   };
@@ -79,7 +83,7 @@ const Index = () => {
             <h2 className="text-lg font-semibold text-zinc-200">Registros Recentes</h2>
             <span className="text-sm text-zinc-500">{filteredData.length} registros encontrados</span>
           </div>
-          <FollowUpTable data={filteredData} />
+          <FollowUpTable data={filteredData} onDelete={handleDeleteFollowUp} />
         </div>
       </div>
     </div>
