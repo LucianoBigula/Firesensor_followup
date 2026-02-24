@@ -5,6 +5,7 @@ import { FollowUp } from "@/types/follow-up";
 import { StatusDistribution } from "./charts/StatusDistribution";
 import { TemperatureValue } from "./charts/TemperatureValue";
 import { WeeklyPerformance } from "./charts/WeeklyPerformance";
+import { SalespersonPerformance } from "./charts/SalespersonPerformance";
 
 interface FollowUpDashboardProps {
   data: FollowUp[];
@@ -33,7 +34,17 @@ export const FollowUpDashboard = ({ data }: FollowUpDashboardProps) => {
         </CardContent>
       </Card>
 
-      <Card className="bg-zinc-900 border-zinc-800 shadow-xl lg:col-span-2">
+      <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-white text-lg">Desempenho por Vendedor</CardTitle>
+          <CardDescription className="text-zinc-500">Valor total de propostas por integrante da equipe</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SalespersonPerformance data={data} />
+        </CardContent>
+      </Card>
+
+      <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
         <CardHeader>
           <CardTitle className="text-white text-lg">Volume Semanal</CardTitle>
           <CardDescription className="text-zinc-500">Quantidade de propostas enviadas por semana do mês</CardDescription>
