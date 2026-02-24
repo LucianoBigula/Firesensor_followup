@@ -6,7 +6,7 @@ export type SemanaMes = 'Semana 1' | 'Semana 2' | 'Semana 3' | 'Semana 4' | 'Sem
 
 export interface FollowUp {
   id: string;
-  dataEnvio: string;
+  dataAtualizacao: string;
   numeroProposta: string;
   vendedor: string;
   integrador: string;

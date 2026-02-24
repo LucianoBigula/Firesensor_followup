@@ -12,10 +12,17 @@ import { Button } from "@/components/ui/button";
 import { showSuccess } from "@/utils/toast";
 
 const Index = () => {
-  // Carregar dados iniciais do localStorage
+  // Carregar dados iniciais do localStorage com migração de campo
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    
+    const parsed = JSON.parse(saved);
+    // Migração: se houver dataEnvio mas não dataAtualizacao, renomeia
+    return parsed.map((item: any) => ({
+      ...item,
+      dataAtualizacao: item.dataAtualizacao || item.dataEnvio || new Date().toISOString().split('T')[0]
+    }));
   });
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +51,14 @@ const Index = () => {
   const handleImportData = (newData: FollowUp[]) => {
     // Filtra os novos dados para não adicionar IDs que já existem
     const existingIds = new Set(followUps.map(item => item.id));
-    const uniqueNewData = newData.filter(item => !existingIds.has(item.id));
+    
+    // Garante que dados importados também usem o novo campo
+    const normalizedNewData = newData.map((item: any) => ({
+      ...item,
+      dataAtualizacao: item.dataAtualizacao || item.dataEnvio || new Date().toISOString().split('T')[0]
+    }));
+
+    const uniqueNewData = normalizedNewData.filter(item => !existingIds.has(item.id));
     
     if (uniqueNewData.length === 0 && newData.length > 0) {
       showSuccess("Todos os registros deste arquivo já existem no sistema.");

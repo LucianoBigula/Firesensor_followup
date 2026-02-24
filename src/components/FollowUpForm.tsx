@@ -17,7 +17,7 @@ interface FollowUpFormProps {
 export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>({
-    dataEnvio: new Date().toISOString().split('T')[0],
+    dataAtualizacao: new Date().toISOString().split('T')[0],
     temperatura: 'Morna',
     expectativa: '30 dias',
     status: 'Em Andamento',
@@ -36,7 +36,9 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
     const followUpToSave: FollowUp = {
       ...formData as FollowUp,
       id: initialData?.id || Math.random().toString(36).substr(2, 9),
-      valor: Number(formData.valor) || 0
+      valor: Number(formData.valor) || 0,
+      // Sempre atualiza a data ao salvar se for uma edição, ou mantém a escolhida
+      dataAtualizacao: formData.dataAtualizacao || new Date().toISOString().split('T')[0]
     };
     
     onSave(followUpToSave);
@@ -45,7 +47,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
     
     if (!initialData) {
       setFormData({
-        dataEnvio: new Date().toISOString().split('T')[0],
+        dataAtualizacao: new Date().toISOString().split('T')[0],
         temperatura: 'Morna',
         expectativa: '30 dias',
         status: 'Em Andamento',
@@ -86,14 +88,14 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dataEnvio" className="text-zinc-400">Data de Envio</Label>
+            <Label htmlFor="dataAtualizacao" className="text-zinc-400">Data de Atualização</Label>
             <Input 
-              id="dataEnvio" 
+              id="dataAtualizacao" 
               type="date" 
               required
-              value={formData.dataEnvio}
+              value={formData.dataAtualizacao}
               className="bg-zinc-800 border-zinc-700 text-white"
-              onChange={(e) => setFormData({...formData, dataEnvio: e.target.value})}
+              onChange={(e) => setFormData({...formData, dataAtualizacao: e.target.value})}
             />
           </div>
           <div className="space-y-2">
@@ -143,7 +145,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             />
           </div>
 
-          {/* Novos Campos de Contato */}
+          {/* Informações de Contato */}
           <div className="col-span-1 md:col-span-2 border-t border-zinc-800 pt-4 mt-2">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Informações de Contato</h3>
           </div>
