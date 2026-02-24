@@ -4,8 +4,10 @@ import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
-import { Search } from "lucide-react";
+import { FollowUpDashboard } from "@/components/FollowUpDashboard";
+import { Search, LayoutDashboard, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   // Carregar dados iniciais do localStorage
@@ -77,14 +79,28 @@ const Index = () => {
         {/* Stats */}
         <FollowUpStats data={followUps} />
 
-        {/* Main Content */}
-        <div className="space-y-4">
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="list" className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-zinc-200">Registros Recentes</h2>
-            <span className="text-sm text-zinc-500">{filteredData.length} registros encontrados</span>
+            <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
+              <TabsTrigger value="list" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+                <List className="mr-2 h-4 w-4" /> Lista
+              </TabsTrigger>
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+              </TabsTrigger>
+            </TabsList>
+            <span className="text-sm text-zinc-500 hidden md:inline">{filteredData.length} registros encontrados</span>
           </div>
-          <FollowUpTable data={filteredData} onDelete={handleDeleteFollowUp} />
-        </div>
+
+          <TabsContent value="list" className="space-y-4 outline-none">
+            <FollowUpTable data={filteredData} onDelete={handleDeleteFollowUp} />
+          </TabsContent>
+
+          <TabsContent value="dashboard" className="outline-none">
+            <FollowUpDashboard data={filteredData} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
