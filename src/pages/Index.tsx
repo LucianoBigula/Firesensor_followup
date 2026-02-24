@@ -5,9 +5,11 @@ import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
-import { Search, LayoutDashboard, List } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { showSuccess } from "@/utils/toast";
 
 const Index = () => {
   // Carregar dados iniciais do localStorage
@@ -17,10 +19,12 @@ const Index = () => {
   });
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   // Salvar no localStorage sempre que houver mudanças
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
+    setLastSaved(new Date().toLocaleTimeString());
   }, [followUps]);
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => {
@@ -39,6 +43,12 @@ const Index = () => {
 
   const handleImportData = (newData: FollowUp[]) => {
     setFollowUps(newData);
+  };
+
+  const handleManualSave = () => {
+    localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
+    setLastSaved(new Date().toLocaleTimeString());
+    showSuccess("Todos os dados foram salvos com sucesso no navegador!");
   };
 
   const filteredData = followUps.filter(item => 
@@ -63,7 +73,14 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">Follow-up de Vendas</h1>
-              <p className="text-zinc-400 text-sm">Firesensor • Gestão Estratégica</p>
+              <div className="flex items-center gap-2 text-zinc-500 text-xs">
+                <span>Firesensor • Gestão Estratégica</span>
+                {lastSaved && (
+                  <span className="flex items-center gap-1 text-emerald-500/70">
+                    <CheckCircle2 className="h-3 w-3" /> Salvo às {lastSaved}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
@@ -77,6 +94,14 @@ const Index = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <Button 
+              onClick={handleManualSave}
+              variant="outline"
+              size="sm"
+              className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+            >
+              <Save className="mr-2 h-4 w-4" /> Salvar
+            </Button>
             <FollowUpActions data={followUps} onImport={handleImportData} />
             <FollowUpForm onSave={handleAddFollowUp} />
           </div>
