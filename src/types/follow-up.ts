@@ -17,4 +17,10 @@ export interface FollowUp {
   status: Status;
   diaSemana: DiaSemana;
   semanaMes: SemanaMes;
+  // Novos campos
+  cnpj?: string;
+  responsavel?: string;
+  cidade?: string;
+  email?: string;
+  telefone?: string;
 }

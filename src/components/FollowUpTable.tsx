@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format } from "date-fns";
-import { User, Trash2, Pencil } from "lucide-react";
+import { User, Trash2, Pencil, MapPin, Phone, Mail } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 import { FollowUpForm } from "./FollowUpForm";
 
@@ -47,20 +47,19 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
           <TableRow className="border-zinc-800 hover:bg-transparent">
             <TableHead className="font-bold text-zinc-300">Vendedor</TableHead>
             <TableHead className="font-bold text-zinc-300">Data</TableHead>
-            <TableHead className="font-bold text-zinc-300">Proposta</TableHead>
+            <TableHead className="font-bold text-zinc-300">Proposta / CNPJ</TableHead>
             <TableHead className="font-bold text-zinc-300">Integrador / Obra</TableHead>
+            <TableHead className="font-bold text-zinc-300">Contato / Cidade</TableHead>
             <TableHead className="font-bold text-zinc-300">Temperatura</TableHead>
-            <TableHead className="font-bold text-zinc-300">Expectativa</TableHead>
             <TableHead className="font-bold text-right text-zinc-300">Valor</TableHead>
             <TableHead className="font-bold text-zinc-300">Status</TableHead>
-            <TableHead className="font-bold text-zinc-300">Atualização</TableHead>
             <TableHead className="font-bold text-center text-zinc-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
             <TableRow className="border-zinc-800">
-              <TableCell colSpan={10} className="text-center py-12 text-zinc-500">
+              <TableCell colSpan={9} className="text-center py-12 text-zinc-500">
                 Nenhum registro encontrado. Comece adicionando um novo follow-up.
               </TableCell>
             </TableRow>
@@ -78,7 +77,12 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                 <TableCell className="whitespace-nowrap text-sm text-zinc-400">
                   {format(new Date(item.dataEnvio), 'dd/MM/yyyy')}
                 </TableCell>
-                <TableCell className="font-medium text-red-400">#{item.numeroProposta}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-red-400">#{item.numeroProposta}</span>
+                    <span className="text-[10px] text-zinc-500">{item.cnpj || 'S/ CNPJ'}</span>
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm text-zinc-200">{item.integrador}</span>
@@ -86,11 +90,19 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   </div>
                 </TableCell>
                 <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-zinc-300">{item.responsavel || 'N/A'}</span>
+                    <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+                      {item.cidade && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {item.cidade}</span>}
+                      {item.telefone && <span className="flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" /> {item.telefone}</span>}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
                   <Badge variant="outline" className={`${getTempColor(item.temperatura)} font-medium text-[10px]`}>
                     {item.temperatura}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs text-zinc-400">{item.expectativa}</TableCell>
                 <TableCell className="text-right font-bold text-sm text-white">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}
                 </TableCell>
@@ -98,12 +110,6 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   <Badge variant="outline" className={`${getStatusColor(item.status)} font-medium text-[10px]`}>
                     {item.status}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="text-[10px]">
-                    <p className="font-medium text-zinc-300">{item.diaSemana}</p>
-                    <p className="text-zinc-500">{item.semanaMes}</p>
-                  </div>
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">
