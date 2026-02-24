@@ -42,7 +42,17 @@ const Index = () => {
   };
 
   const handleImportData = (newData: FollowUp[]) => {
-    setFollowUps(newData);
+    // Filtra os novos dados para não adicionar IDs que já existem
+    const existingIds = new Set(followUps.map(item => item.id));
+    const uniqueNewData = newData.filter(item => !existingIds.has(item.id));
+    
+    if (uniqueNewData.length === 0 && newData.length > 0) {
+      showSuccess("Todos os registros deste arquivo já existem no sistema.");
+      return;
+    }
+
+    setFollowUps([...uniqueNewData, ...followUps]);
+    showSuccess(`${uniqueNewData.length} novos registros adicionados com sucesso!`);
   };
 
   const handleManualSave = () => {
