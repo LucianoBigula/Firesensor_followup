@@ -17,7 +17,7 @@ interface FollowUpFormProps {
 export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>({
-    dataAtualizacao: new Date().toISOString().split('T')[0],
+    dataEnvio: new Date().toISOString().split('T')[0],
     temperatura: 'Morna',
     expectativa: '30 dias',
     status: 'Em Andamento',
@@ -45,7 +45,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
     
     if (!initialData) {
       setFormData({
-        dataAtualizacao: new Date().toISOString().split('T')[0],
+        dataEnvio: new Date().toISOString().split('T')[0],
         temperatura: 'Morna',
         expectativa: '30 dias',
         status: 'Em Andamento',
@@ -86,14 +86,14 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dataAtualizacao" className="text-zinc-400">Data de Atualização</Label>
+            <Label htmlFor="dataEnvio" className="text-zinc-400">Data de Envio</Label>
             <Input 
-              id="dataAtualizacao" 
+              id="dataEnvio" 
               type="date" 
               required
-              value={formData.dataAtualizacao}
+              value={formData.dataEnvio}
               className="bg-zinc-800 border-zinc-700 text-white"
-              onChange={(e) => setFormData({...formData, dataAtualizacao: e.target.value})}
+              onChange={(e) => setFormData({...formData, dataEnvio: e.target.value})}
             />
           </div>
           <div className="space-y-2">
