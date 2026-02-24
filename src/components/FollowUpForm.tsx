@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FollowUp, Temperatura, Expectativa, Status, DiaSemana, SemanaMes } from "@/types/follow-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 
 interface FollowUpFormProps {
-  onAdd: (followUp: FollowUp) => void;
+  onSave: (followUp: FollowUp) => void;
+  initialData?: FollowUp;
+  trigger?: React.ReactNode;
 }
 
-export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
+export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>({
     dataEnvio: new Date().toISOString().split('T')[0],
@@ -23,36 +25,53 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
     semanaMes: 'Semana 1'
   });
 
+  // Atualiza o estado interno quando os dados iniciais mudam (para edição)
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData, open]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newFollowUp: FollowUp = {
+    const followUpToSave: FollowUp = {
       ...formData as FollowUp,
-      id: Math.random().toString(36).substr(2, 9),
+      id: initialData?.id || Math.random().toString(36).substr(2, 9),
       valor: Number(formData.valor) || 0
     };
-    onAdd(newFollowUp);
-    showSuccess("Follow-up registrado com sucesso!");
+    
+    onSave(followUpToSave);
+    showSuccess(initialData ? "Registro atualizado com sucesso!" : "Follow-up registrado com sucesso!");
     setOpen(false);
-    setFormData({
-      dataEnvio: new Date().toISOString().split('T')[0],
-      temperatura: 'Morna',
-      expectativa: '30 dias',
-      status: 'Em Andamento',
-      diaSemana: 'Segunda',
-      semanaMes: 'Semana 1'
-    });
+    
+    if (!initialData) {
+      setFormData({
+        dataEnvio: new Date().toISOString().split('T')[0],
+        temperatura: 'Morna',
+        expectativa: '30 dias',
+        status: 'Em Andamento',
+        diaSemana: 'Segunda',
+        semanaMes: 'Semana 1'
+      });
+    }
   };
+
+  const defaultTrigger = (
+    <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 shadow-lg shadow-red-900/20">
+      <PlusCircle className="mr-2 h-4 w-4" /> Novo Follow-up
+    </Button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 shadow-lg shadow-red-900/20">
-          <PlusCircle className="mr-2 h-4 w-4" /> Novo Follow-up
-        </Button>
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-white">Registrar Novo Follow-up</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-white">
+            {initialData ? "Editar Follow-up" : "Registrar Novo Follow-up"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
@@ -61,6 +80,7 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
               id="vendedor" 
               placeholder="Nome do vendedor" 
               required
+              value={formData.vendedor || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, vendedor: e.target.value})}
             />
@@ -82,6 +102,7 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
               id="proposta" 
               placeholder="Ex: 2024-001" 
               required
+              value={formData.numeroProposta || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, numeroProposta: e.target.value})}
             />
@@ -92,6 +113,7 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
               id="integrador" 
               placeholder="Nome do integrador" 
               required
+              value={formData.integrador || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, integrador: e.target.value})}
             />
@@ -102,13 +124,17 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
               id="obra" 
               placeholder="Nome da obra" 
               required
+              value={formData.obra || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, obra: e.target.value})}
             />
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Temperatura</Label>
-            <Select onValueChange={(v: Temperatura) => setFormData({...formData, temperatura: v})} defaultValue="Morna">
+            <Select 
+              onValueChange={(v: Temperatura) => setFormData({...formData, temperatura: v})} 
+              value={formData.temperatura}
+            >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -121,7 +147,10 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Expectativa</Label>
-            <Select onValueChange={(v: Expectativa) => setFormData({...formData, expectativa: v})} defaultValue="30 dias">
+            <Select 
+              onValueChange={(v: Expectativa) => setFormData({...formData, expectativa: v})} 
+              value={formData.expectativa}
+            >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -142,13 +171,17 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
               step="0.01" 
               placeholder="0,00" 
               required
+              value={formData.valor || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, valor: Number(e.target.value)})}
             />
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Status</Label>
-            <Select onValueChange={(v: Status) => setFormData({...formData, status: v})} defaultValue="Em Andamento">
+            <Select 
+              onValueChange={(v: Status) => setFormData({...formData, status: v})} 
+              value={formData.status}
+            >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -162,7 +195,10 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Dia da Semana</Label>
-            <Select onValueChange={(v: DiaSemana) => setFormData({...formData, diaSemana: v})} defaultValue="Segunda">
+            <Select 
+              onValueChange={(v: DiaSemana) => setFormData({...formData, diaSemana: v})} 
+              value={formData.diaSemana}
+            >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -177,7 +213,10 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Semana do Mês</Label>
-            <Select onValueChange={(v: SemanaMes) => setFormData({...formData, semanaMes: v})} defaultValue="Semana 1">
+            <Select 
+              onValueChange={(v: SemanaMes) => setFormData({...formData, semanaMes: v})} 
+              value={formData.semanaMes}
+            >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -191,7 +230,9 @@ export const FollowUpForm = ({ onAdd }: FollowUpFormProps) => {
             </Select>
           </div>
           <div className="col-span-2 pt-4">
-            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">Salvar Registro</Button>
+            <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
+              {initialData ? "Salvar Alterações" : "Salvar Registro"}
+            </Button>
           </div>
         </form>
       </DialogContent>

@@ -27,6 +27,12 @@ const Index = () => {
     setFollowUps([newFollowUp, ...followUps]);
   };
 
+  const handleUpdateFollowUp = (updatedFollowUp: FollowUp) => {
+    setFollowUps(followUps.map(item => 
+      item.id === updatedFollowUp.id ? updatedFollowUp : item
+    ));
+  };
+
   const handleDeleteFollowUp = (id: string) => {
     setFollowUps(followUps.filter(item => item.id !== id));
   };
@@ -72,7 +78,7 @@ const Index = () => {
               />
             </div>
             <FollowUpActions data={followUps} onImport={handleImportData} />
-            <FollowUpForm onAdd={handleAddFollowUp} />
+            <FollowUpForm onSave={handleAddFollowUp} />
           </div>
         </div>
 
@@ -94,7 +100,11 @@ const Index = () => {
           </div>
 
           <TabsContent value="list" className="space-y-4 outline-none">
-            <FollowUpTable data={filteredData} onDelete={handleDeleteFollowUp} />
+            <FollowUpTable 
+              data={filteredData} 
+              onDelete={handleDeleteFollowUp} 
+              onUpdate={handleUpdateFollowUp}
+            />
           </TabsContent>
 
           <TabsContent value="dashboard" className="outline-none">

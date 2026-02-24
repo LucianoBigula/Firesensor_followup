@@ -3,15 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format } from "date-fns";
-import { User, Trash2 } from "lucide-react";
+import { User, Trash2, Pencil } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
+import { FollowUpForm } from "./FollowUpForm";
 
 interface FollowUpTableProps {
   data: FollowUp[];
   onDelete: (id: string) => void;
+  onUpdate: (followUp: FollowUp) => void;
 }
 
-export const FollowUpTable = ({ data, onDelete }: FollowUpTableProps) => {
+export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) => {
   const getTempColor = (temp: string) => {
     switch (temp) {
       case 'Quente': return 'bg-red-500/20 text-red-400 border-red-500/30';
@@ -104,14 +106,29 @@ export const FollowUpTable = ({ data, onDelete }: FollowUpTableProps) => {
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center justify-center gap-1">
+                    <FollowUpForm 
+                      onSave={onUpdate} 
+                      initialData={item}
+                      trigger={
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
