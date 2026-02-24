@@ -46,7 +46,7 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
         <TableHeader className="bg-zinc-900">
           <TableRow className="border-zinc-800 hover:bg-transparent">
             <TableHead className="font-bold text-zinc-300">Vendedor</TableHead>
-            <TableHead className="font-bold text-zinc-300">Data</TableHead>
+            <TableHead className="font-bold text-zinc-300">Data de Atualização</TableHead>
             <TableHead className="font-bold text-zinc-300">Proposta / CNPJ</TableHead>
             <TableHead className="font-bold text-zinc-300">Integrador / Obra</TableHead>
             <TableHead className="font-bold text-zinc-300">Contato / Cidade</TableHead>
@@ -75,7 +75,7 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-zinc-400">
-                  {format(new Date(item.dataEnvio), 'dd/MM/yyyy')}
+                  {format(new Date(item.dataAtualizacao), 'dd/MM/yyyy')}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
