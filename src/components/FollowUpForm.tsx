@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FollowUp, Temperatura, Expectativa, Status, DiaSemana, SemanaMes } from "@/types/follow-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -37,7 +38,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
       ...formData as FollowUp,
       id: initialData?.id || Math.random().toString(36).substr(2, 9),
       valor: Number(formData.valor) || 0,
-      // Sempre atualiza a data ao salvar se for uma edição, ou mantém a escolhida
       dataAtualizacao: formData.dataAtualizacao || new Date().toISOString().split('T')[0]
     };
     
@@ -199,6 +199,33 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
               value={formData.telefone || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+            />
+          </div>
+
+          {/* Histórico e Ações */}
+          <div className="col-span-1 md:col-span-2 border-t border-zinc-800 pt-4 mt-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Histórico e Planejamento</h3>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label htmlFor="comentarioAcao" className="text-zinc-400">Comentário da Ação Realizada</Label>
+            <Textarea 
+              id="comentarioAcao" 
+              placeholder="Descreva o que foi feito nesta atualização..." 
+              value={formData.comentarioAcao || ""}
+              className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]"
+              onChange={(e) => setFormData({...formData, comentarioAcao: e.target.value})}
+            />
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label htmlFor="acaoFutura" className="text-zinc-400">Próxima Ação a Fazer</Label>
+            <Textarea 
+              id="acaoFutura" 
+              placeholder="Descreva o próximo passo planejado..." 
+              value={formData.acaoFutura || ""}
+              className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]"
+              onChange={(e) => setFormData({...formData, acaoFutura: e.target.value})}
             />
           </div>
 

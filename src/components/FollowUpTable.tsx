@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format } from "date-fns";
-import { User, Trash2, Pencil, MapPin, Phone, Mail } from "lucide-react";
+import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 import { FollowUpForm } from "./FollowUpForm";
 
@@ -48,7 +48,7 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
             <TableHead className="font-bold text-zinc-300">Vendedor</TableHead>
             <TableHead className="font-bold text-zinc-300">Atualização</TableHead>
             <TableHead className="font-bold text-zinc-300">Proposta / CNPJ</TableHead>
-            <TableHead className="font-bold text-zinc-300">Integrador / Obra</TableHead>
+            <TableHead className="font-bold text-zinc-300">Integrador / Obra / Ações</TableHead>
             <TableHead className="font-bold text-zinc-300">Contato / Cidade</TableHead>
             <TableHead className="font-bold text-zinc-300">Temperatura</TableHead>
             <TableHead className="font-bold text-right text-zinc-300">Valor</TableHead>
@@ -83,10 +83,28 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                     <span className="text-[10px] text-zinc-500">{item.cnpj || 'S/ CNPJ'}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
+                <TableCell className="max-w-[250px]">
+                  <div className="flex flex-col gap-1">
                     <span className="font-semibold text-sm text-zinc-200">{item.integrador}</span>
                     <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{item.obra}</span>
+                    
+                    {/* Exibição das Ações */}
+                    {(item.comentarioAcao || item.acaoFutura) && (
+                      <div className="mt-2 space-y-1 border-t border-zinc-800 pt-1">
+                        {item.comentarioAcao && (
+                          <div className="flex items-start gap-1.5 text-[10px] text-zinc-400 italic">
+                            <MessageSquare className="h-2.5 w-2.5 mt-0.5 text-zinc-500 shrink-0" />
+                            <span className="line-clamp-2">{item.comentarioAcao}</span>
+                          </div>
+                        )}
+                        {item.acaoFutura && (
+                          <div className="flex items-start gap-1.5 text-[10px] text-emerald-500/80 font-medium">
+                            <ArrowRightCircle className="h-2.5 w-2.5 mt-0.5 shrink-0" />
+                            <span className="line-clamp-2">{item.acaoFutura}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
