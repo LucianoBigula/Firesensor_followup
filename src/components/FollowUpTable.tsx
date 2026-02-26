@@ -40,6 +40,14 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
     }
   };
 
+  // Função para formatar a data corretamente sem erro de fuso horário
+  const formatDateCorrectly = (dateString: string) => {
+    if (!dateString) return "";
+    // Divide a string YYYY-MM-DD e cria a data usando o construtor local
+    const [year, month, day] = dateString.split('-').map(Number);
+    return format(new Date(year, month - 1, day), 'dd/MM/yyyy');
+  };
+
   return (
     <div className="bg-zinc-900/50 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden">
       <Table>
@@ -75,7 +83,7 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm text-zinc-400">
-                  {format(new Date(item.dataAtualizacao), 'dd/MM/yyyy')}
+                  {formatDateCorrectly(item.dataAtualizacao)}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
