@@ -5,11 +5,22 @@ import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2 } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { showSuccess } from "@/utils/toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   // Carregar dados iniciais do localStorage com migração de campo
@@ -46,6 +57,11 @@ const Index = () => {
 
   const handleDeleteFollowUp = (id: string) => {
     setFollowUps(followUps.filter(item => item.id !== id));
+  };
+
+  const handleClearAll = () => {
+    setFollowUps([]);
+    showSuccess("Todos os registros foram removidos.");
   };
 
   const handleImportData = (newData: FollowUp[]) => {
@@ -118,6 +134,33 @@ const Index = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:bg-red-950 hover:text-red-400 hover:border-red-900"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-zinc-400">
+                    Esta ação não pode ser desfeita. Isso excluirá permanentemente todos os registros de follow-up salvos neste navegador.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAll} className="bg-red-600 text-white hover:bg-red-700">
+                    Sim, excluir tudo
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             <Button 
               onClick={handleManualSave}
               variant="outline"
