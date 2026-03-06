@@ -15,22 +15,41 @@ interface FollowUpFormProps {
   trigger?: React.ReactNode;
 }
 
+const DEFAULT_FORM_STATE = {
+  dataAtualizacao: new Date().toISOString().split('T')[0],
+  temperatura: 'Morna' as Temperatura,
+  expectativa: '30 dias' as Expectativa,
+  status: 'Em Andamento' as Status,
+  diaSemana: 'Segunda' as DiaSemana,
+  semanaMes: 'Semana 1' as SemanaMes,
+  vendedor: "",
+  numeroProposta: "",
+  integrador: "",
+  obra: "",
+  valor: 0,
+  cnpj: "",
+  responsavel: "",
+  cidade: "",
+  email: "",
+  telefone: "",
+  comentarioAcao: "",
+  acaoFutura: ""
+};
+
 export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<FollowUp>>({
-    dataAtualizacao: new Date().toISOString().split('T')[0],
-    temperatura: 'Morna',
-    expectativa: '30 dias',
-    status: 'Em Andamento',
-    diaSemana: 'Segunda',
-    semanaMes: 'Semana 1'
-  });
+  const [formData, setFormData] = useState<Partial<FollowUp>>(DEFAULT_FORM_STATE);
 
+  // Resetar ou carregar dados sempre que o diálogo abrir
   useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
+    if (open) {
+      if (initialData) {
+        setFormData({ ...initialData });
+      } else {
+        setFormData({ ...DEFAULT_FORM_STATE });
+      }
     }
-  }, [initialData, open]);
+  }, [open, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,17 +63,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
     onSave(followUpToSave);
     showSuccess(initialData ? "Registro atualizado com sucesso!" : "Follow-up registrado com sucesso!");
     setOpen(false);
-    
-    if (!initialData) {
-      setFormData({
-        dataAtualizacao: new Date().toISOString().split('T')[0],
-        temperatura: 'Morna',
-        expectativa: '30 dias',
-        status: 'Em Andamento',
-        diaSemana: 'Segunda',
-        semanaMes: 'Semana 1'
-      });
-    }
   };
 
   const defaultTrigger = (
@@ -68,7 +76,8 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
+      {/* A key={open} força o React a remontar o conteúdo do diálogo toda vez que ele abre, resolvendo bugs de renderização no Chrome */}
+      <DialogContent key={open ? 'open' : 'closed'} className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">
             {initialData ? "Editar Follow-up" : "Registrar Novo Follow-up"}
@@ -93,7 +102,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
               id="dataAtualizacao" 
               type="date" 
               required
-              value={formData.dataAtualizacao}
+              value={formData.dataAtualizacao || ""}
               className="bg-zinc-800 border-zinc-700 text-white"
               onChange={(e) => setFormData({...formData, dataAtualizacao: e.target.value})}
             />
