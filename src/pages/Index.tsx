@@ -5,11 +5,11 @@ import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2 } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Index = () => {
   // Carregar dados iniciais do localStorage com migração de campo
@@ -38,6 +45,7 @@ const Index = () => {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
   // Salvar no localStorage sempre que houver mudanças
   useEffect(() => {
@@ -62,6 +70,20 @@ const Index = () => {
   const handleClearAll = () => {
     setFollowUps([]);
     showSuccess("Todos os registros foram removidos.");
+  };
+
+  const handleClearByVendedor = () => {
+    if (!selectedVendedorToClear) {
+      showError("Selecione um vendedor para excluir.");
+      return;
+    }
+    const countBefore = followUps.length;
+    const newFollowUps = followUps.filter(item => item.vendedor !== selectedVendedorToClear);
+    const countRemoved = countBefore - newFollowUps.length;
+    
+    setFollowUps(newFollowUps);
+    showSuccess(`${countRemoved} registros do vendedor ${selectedVendedorToClear} foram removidos.`);
+    setSelectedVendedorToClear("");
   };
 
   const handleImportData = (newData: FollowUp[]) => {
@@ -97,6 +119,9 @@ const Index = () => {
     item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.vendedor.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Obter lista única de vendedores para o filtro de exclusão
+  const uniqueVendedores = Array.from(new Set(followUps.map(item => item.vendedor))).sort();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
@@ -134,6 +159,48 @@ const Index = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:bg-red-950 hover:text-red-400 hover:border-red-900"
+                >
+                  <UserX className="mr-2 h-4 w-4" /> Limpar por Vendedor
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir registros por vendedor</AlertDialogTitle>
+                  <AlertDialogDescription className="text-zinc-400">
+                    Selecione um vendedor para remover todos os seus registros permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-4">
+                  <Select onValueChange={setSelectedVendedorToClear} value={selectedVendedorToClear}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                      <SelectValue placeholder="Selecione o vendedor" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                      {uniqueVendedores.map(v => (
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleClearByVendedor} 
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={!selectedVendedorToClear}
+                  >
+                    Excluir registros
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
