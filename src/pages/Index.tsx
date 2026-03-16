@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { FollowUp } from "@/types/follow-up";
+import { FollowUp, Temperatura } from "@/types/follow-up";
 import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ const Index = () => {
   });
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [tempFilter, setTempFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
@@ -113,12 +114,17 @@ const Index = () => {
     showSuccess("Todos os dados foram salvos com sucesso no navegador!");
   };
 
-  const filteredData = followUps.filter(item => 
-    item.integrador.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.obra.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.vendedor.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = followUps.filter(item => {
+    const matchesSearch = 
+      item.integrador.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.obra.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.vendedor.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
+    
+    return matchesSearch && matchesTemp;
+  });
 
   // Obter lista única de vendedores para o filtro de exclusão
   const uniqueVendedores = Array.from(new Set(followUps.map(item => item.vendedor))).sort();
@@ -158,6 +164,23 @@ const Index = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+
+            <div className="w-full md:w-40">
+              <Select value={tempFilter} onValueChange={setTempFilter}>
+                <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-full">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 text-zinc-500" />
+                    <SelectValue placeholder="Temperatura" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectItem value="all">Todas Temperaturas</SelectItem>
+                  <SelectItem value="Quente">🔥 Quente</SelectItem>
+                  <SelectItem value="Morna">⚖️ Morna</SelectItem>
+                  <SelectItem value="Fria">❄️ Fria</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <AlertDialog>
