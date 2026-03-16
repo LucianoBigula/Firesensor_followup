@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FollowUp, Temperatura } from "@/types/follow-up";
+import { FollowUp, Temperatura, Status } from "@/types/follow-up";
 import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
@@ -45,6 +45,7 @@ const Index = () => {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [tempFilter, setTempFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
@@ -122,8 +123,9 @@ const Index = () => {
       item.vendedor.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
+    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
     
-    return matchesSearch && matchesTemp;
+    return matchesSearch && matchesTemp && matchesStatus;
   });
 
   // Obter lista única de vendedores para o filtro de exclusão
@@ -179,6 +181,24 @@ const Index = () => {
                   <SelectItem value="Quente">🔥 Quente</SelectItem>
                   <SelectItem value="Morna">⚖️ Morna</SelectItem>
                   <SelectItem value="Fria">❄️ Fria</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-full md:w-40">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-full">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 text-zinc-500" />
+                    <SelectValue placeholder="Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="Ganha">✅ Ganha</SelectItem>
+                  <SelectItem value="Em Andamento">⏳ Em Andamento</SelectItem>
+                  <SelectItem value="Perdida">❌ Perdida</SelectItem>
+                  <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
