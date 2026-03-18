@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { FollowUp, Temperatura, Status } from "@/types/follow-up";
+import { Prospecting } from "@/types/prospecting";
 import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
 import { FollowUpForm } from "@/components/FollowUpForm";
 import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter } from "lucide-react";
+import { ProspectingTable } from "@/components/ProspectingTable";
+import { ProspectingForm } from "@/components/ProspectingForm";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter, Target } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -30,106 +33,73 @@ import {
 } from "@/components/ui/select";
 
 const Index = () => {
-  // Carregar dados iniciais do localStorage com migração de campo
+  // Follow-ups State
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
-    
     const parsed = JSON.parse(saved);
-    // Migração: se houver dataEnvio mas não dataAtualizacao, renomeia
     return parsed.map((item: any) => ({
       ...item,
       dataAtualizacao: item.dataAtualizacao || item.dataEnvio || new Date().toISOString().split('T')[0]
     }));
+  });
+
+  // Prospecting State
+  const [prospects, setProspects] = useState<Prospecting[]>(() => {
+    const saved = localStorage.getItem("firesensor_prospecting");
+    return saved ? JSON.parse(saved) : [];
   });
   
   const [searchTerm, setSearchTerm] = useState("");
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
-  // Salvar no localStorage sempre que houver mudanças
+  // Auto-save
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
+    localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
-  }, [followUps]);
+  }, [followUps, prospects]);
 
-  const handleAddFollowUp = (newFollowUp: FollowUp) => {
-    setFollowUps([newFollowUp, ...followUps]);
-  };
+  // Handlers
+  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
+  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
+  const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
 
-  const handleUpdateFollowUp = (updatedFollowUp: FollowUp) => {
-    setFollowUps(followUps.map(item => 
-      item.id === updatedFollowUp.id ? updatedFollowUp : item
-    ));
-  };
-
-  const handleDeleteFollowUp = (id: string) => {
-    setFollowUps(followUps.filter(item => item.id !== id));
-  };
+  const handleAddProspect = (newProspect: Prospecting) => setProspects([newProspect, ...prospects]);
+  const handleUpdateProspect = (updated: Prospecting) => setProspects(prospects.map(item => item.id === updated.id ? updated : item));
+  const handleDeleteProspect = (id: string) => setProspects(prospects.filter(item => item.id !== id));
 
   const handleClearAll = () => {
     setFollowUps([]);
+    setProspects([]);
     showSuccess("Todos os registros foram removidos.");
-  };
-
-  const handleClearByVendedor = () => {
-    if (!selectedVendedorToClear) {
-      showError("Selecione um vendedor para excluir.");
-      return;
-    }
-    const countBefore = followUps.length;
-    const newFollowUps = followUps.filter(item => item.vendedor !== selectedVendedorToClear);
-    const countRemoved = countBefore - newFollowUps.length;
-    
-    setFollowUps(newFollowUps);
-    showSuccess(`${countRemoved} registros do vendedor ${selectedVendedorToClear} foram removidos.`);
-    setSelectedVendedorToClear("");
-  };
-
-  const handleImportData = (newData: FollowUp[]) => {
-    // Filtra os novos dados para não adicionar IDs que já existem
-    const existingIds = new Set(followUps.map(item => item.id));
-    
-    // Garante que dados importados também usem o novo campo
-    const normalizedNewData = newData.map((item: any) => ({
-      ...item,
-      dataAtualizacao: item.dataAtualizacao || item.dataEnvio || new Date().toISOString().split('T')[0]
-    }));
-
-    const uniqueNewData = normalizedNewData.filter(item => !existingIds.has(item.id));
-    
-    if (uniqueNewData.length === 0 && newData.length > 0) {
-      showSuccess("Todos os registros deste arquivo já existem no sistema.");
-      return;
-    }
-
-    setFollowUps([...uniqueNewData, ...followUps]);
-    showSuccess(`${uniqueNewData.length} novos registros adicionados com sucesso!`);
   };
 
   const handleManualSave = () => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
+    localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
-    showSuccess("Todos os dados foram salvos com sucesso no navegador!");
+    showSuccess("Dados salvos com sucesso!");
   };
 
-  const filteredData = followUps.filter(item => {
+  const filteredFollowUps = followUps.filter(item => {
     const matchesSearch = 
       item.integrador.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.obra.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.vendedor.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    
     return matchesSearch && matchesTemp && matchesStatus;
   });
 
-  // Obter lista única de vendedores para o filtro de exclusão
-  const uniqueVendedores = Array.from(new Set(followUps.map(item => item.vendedor))).sort();
+  const filteredProspects = prospects.filter(item => 
+    item.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.vendedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.contato.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
@@ -138,16 +108,12 @@ const Index = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
-              <img 
-                src="/Firesensor.png" 
-                alt="Firesensor Logo" 
-                className="h-12 w-auto object-contain"
-              />
+              <img src="/Firesensor.png" alt="Firesensor Logo" className="h-12 w-auto object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Follow-up de Vendas</h1>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Gestão Comercial</h1>
               <div className="flex items-center gap-2 text-zinc-500 text-xs">
-                <span>Firesensor • Gestão Estratégica</span>
+                <span>Firesensor • Inteligência de Vendas</span>
                 {lastSaved && (
                   <span className="flex items-center gap-1 text-emerald-500/70">
                     <CheckCircle2 className="h-3 w-3" /> Salvo às {lastSaved}
@@ -162,155 +128,99 @@ const Index = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
                 placeholder="Buscar..." 
-                className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full focus:ring-red-600"
+                className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="w-full md:w-40">
-              <Select value={tempFilter} onValueChange={setTempFilter}>
-                <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-full">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-3.5 w-3.5 text-zinc-500" />
-                    <SelectValue placeholder="Temperatura" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                  <SelectItem value="all">Todas Temperaturas</SelectItem>
-                  <SelectItem value="Quente">🔥 Quente</SelectItem>
-                  <SelectItem value="Morna">⚖️ Morna</SelectItem>
-                  <SelectItem value="Fria">❄️ Fria</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="w-full md:w-40">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-full">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-3.5 w-3.5 text-zinc-500" />
-                    <SelectValue placeholder="Status" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                  <SelectItem value="all">Todos Status</SelectItem>
-                  <SelectItem value="Ganha">✅ Ganha</SelectItem>
-                  <SelectItem value="Em Andamento">⏳ Em Andamento</SelectItem>
-                  <SelectItem value="Perdida">❌ Perdida</SelectItem>
-                  <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
+            <Button onClick={handleManualSave} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300">
+              <Save className="mr-2 h-4 w-4" /> Salvar
+            </Button>
+            
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:bg-red-950 hover:text-red-400 hover:border-red-900"
-                >
-                  <UserX className="mr-2 h-4 w-4" /> Limpar por Vendedor
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir registros por vendedor</AlertDialogTitle>
-                  <AlertDialogDescription className="text-zinc-400">
-                    Selecione um vendedor para remover todos os seus registros permanentemente.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="py-4">
-                  <Select onValueChange={setSelectedVendedorToClear} value={selectedVendedorToClear}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                      <SelectValue placeholder="Selecione o vendedor" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                      {uniqueVendedores.map(v => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleClearByVendedor} 
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={!selectedVendedorToClear}
-                  >
-                    Excluir registros
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:bg-red-950 hover:text-red-400 hover:border-red-900"
-                >
+                <Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400">
                   <Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-zinc-400">
-                    Esta ação não pode ser desfeita. Isso excluirá permanentemente todos os registros de follow-up salvos neste navegador.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle>Limpar todos os dados?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-zinc-400">Isso removerá prospecções e follow-ups permanentemente.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearAll} className="bg-red-600 text-white hover:bg-red-700">
-                    Sim, excluir tudo
-                  </AlertDialogAction>
+                  <AlertDialogCancel className="bg-zinc-800 text-white">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAll} className="bg-red-600 text-white">Sim, excluir tudo</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
-            <Button 
-              onClick={handleManualSave}
-              variant="outline"
-              size="sm"
-              className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-            >
-              <Save className="mr-2 h-4 w-4" /> Salvar
-            </Button>
-            <FollowUpActions data={followUps} onImport={handleImportData} />
-            <FollowUpForm onSave={handleAddFollowUp} />
           </div>
         </div>
 
-        {/* Stats */}
-        <FollowUpStats data={followUps} />
-
         {/* Tabs Navigation */}
-        <Tabs defaultValue="list" className="space-y-6">
+        <Tabs defaultValue="prospecting" className="space-y-6">
           <div className="flex items-center justify-between">
             <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
-              <TabsTrigger value="list" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-                <List className="mr-2 h-4 w-4" /> Lista
+              <TabsTrigger value="prospecting" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                <Target className="mr-2 h-4 w-4" /> Prospecção
               </TabsTrigger>
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+              <TabsTrigger value="followup" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+                <List className="mr-2 h-4 w-4" /> Follow-up
+              </TabsTrigger>
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white">
                 <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
               </TabsTrigger>
             </TabsList>
-            <span className="text-sm text-zinc-500 hidden md:inline">{filteredData.length} registros encontrados</span>
+            
+            <div className="flex items-center gap-2">
+              <TabsContent value="prospecting" className="m-0">
+                <ProspectingForm onSave={handleAddProspect} />
+              </TabsContent>
+              <TabsContent value="followup" className="m-0">
+                <div className="flex gap-2">
+                  <Select value={tempFilter} onValueChange={setTempFilter}>
+                    <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full">
+                      <SelectValue placeholder="Temperatura" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      <SelectItem value="all">Todas Temps</SelectItem>
+                      <SelectItem value="Quente">🔥 Quente</SelectItem>
+                      <SelectItem value="Morna">⚖️ Morna</SelectItem>
+                      <SelectItem value="Fria">❄️ Fria</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FollowUpForm onSave={handleAddFollowUp} />
+                </div>
+              </TabsContent>
+            </div>
           </div>
 
-          <TabsContent value="list" className="space-y-4 outline-none">
-            <FollowUpTable 
-              data={filteredData} 
-              onDelete={handleDeleteFollowUp} 
-              onUpdate={handleUpdateFollowUp}
-            />
+          <TabsContent value="prospecting" className="outline-none space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <p className="text-zinc-500 text-xs uppercase font-bold">Total de Leads</p>
+                <p className="text-2xl font-bold text-white">{prospects.length}</p>
+              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <p className="text-zinc-500 text-xs uppercase font-bold">Qualificados</p>
+                <p className="text-2xl font-bold text-emerald-500">{prospects.filter(p => p.status === 'Qualificado').length}</p>
+              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <p className="text-zinc-500 text-xs uppercase font-bold">Conversão (Proposta)</p>
+                <p className="text-2xl font-bold text-purple-500">{prospects.filter(p => p.status === 'Virou Proposta').length}</p>
+              </div>
+            </div>
+            <ProspectingTable data={filteredProspects} onDelete={handleDeleteProspect} onUpdate={handleUpdateProspect} />
+          </TabsContent>
+
+          <TabsContent value="followup" className="space-y-6 outline-none">
+            <FollowUpStats data={followUps} />
+            <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
 
           <TabsContent value="dashboard" className="outline-none">
-            <FollowUpDashboard data={filteredData} />
+            <FollowUpDashboard data={followUps} />
           </TabsContent>
         </Tabs>
       </div>
