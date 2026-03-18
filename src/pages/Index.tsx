@@ -274,12 +274,14 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="followup" className="space-y-6 outline-none">
-            <FollowUpStats data={followUps} />
+            {/* Agora passando filteredFollowUps para recalcular os cards */}
+            <FollowUpStats data={filteredFollowUps} />
             <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
 
           <TabsContent value="dashboard" className="outline-none">
-            <FollowUpDashboard data={followUps} />
+            {/* Agora passando filteredFollowUps para recalcular os gráficos */}
+            <FollowUpDashboard data={filteredFollowUps} />
           </TabsContent>
         </Tabs>
       </div>
