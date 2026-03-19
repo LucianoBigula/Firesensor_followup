@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { FollowUp } from "@/types/follow-up";
 import { StatusDistribution } from "./charts/StatusDistribution";
 import { TemperatureValue } from "./charts/TemperatureValue";
-import { WeeklyPerformance } from "./charts/WeeklyPerformance";
+import { MonthlyPerformance } from "./charts/MonthlyPerformance";
 import { SalespersonPerformance } from "./charts/SalespersonPerformance";
 import { StatusValueBreakdown } from "./charts/StatusValueBreakdown";
 
@@ -57,11 +57,11 @@ export const FollowUpDashboard = ({ data }: FollowUpDashboardProps) => {
 
       <Card className="bg-zinc-900 border-zinc-800 shadow-xl lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-white text-lg">Volume Semanal</CardTitle>
-          <CardDescription className="text-zinc-500">Quantidade de propostas enviadas por semana do mês</CardDescription>
+          <CardTitle className="text-white text-lg">Volume Mensal</CardTitle>
+          <CardDescription className="text-zinc-500">Quantidade de propostas enviadas por mês do ano</CardDescription>
         </CardHeader>
         <CardContent>
-          <WeeklyPerformance data={data} />
+          <MonthlyPerformance data={data} />
         </CardContent>
       </Card>
     </div>
