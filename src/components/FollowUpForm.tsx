@@ -134,9 +134,18 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input type="email" value={formData.email || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
           </div>
 
-          {/* Seção: Status e Planejamento */}
+          {/* Seção: Ações e Status (Reorganizada) */}
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Status e Planejamento</h3>
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Ações e Status</h3>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Comentário da Última Ação</Label>
+            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
+          </div>
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Próxima Ação Planejada</Label>
+            <Input value={formData.acaoFutura || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, acaoFutura: e.target.value}))} />
           </div>
 
           <div className="space-y-2">
@@ -161,15 +170,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Comentário da Última Ação</Label>
-            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
-          </div>
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Próxima Ação Planejada</Label>
-            <Input value={formData.acaoFutura || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, acaoFutura: e.target.value}))} />
           </div>
 
           <div className="col-span-1 md:col-span-2 pt-4">
