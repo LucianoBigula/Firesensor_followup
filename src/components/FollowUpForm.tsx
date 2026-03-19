@@ -78,6 +78,11 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+          {/* Seção: Informações Básicas */}
+          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Informações da Proposta</h3>
+          </div>
+          
           <div className="space-y-2">
             <Label className="text-zinc-400">Vendedor</Label>
             <Input required value={formData.vendedor || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, vendedor: e.target.value}))} />
@@ -91,6 +96,10 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input required value={formData.numeroProposta || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, numeroProposta: e.target.value}))} />
           </div>
           <div className="space-y-2">
+            <Label className="text-zinc-400">Valor (R$)</Label>
+            <Input type="number" step="0.01" required value={formData.valor ?? ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, valor: e.target.value === "" ? undefined : Number(e.target.value)}))} />
+          </div>
+          <div className="space-y-2">
             <Label className="text-zinc-400">Integrador</Label>
             <Input required value={formData.integrador || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, integrador: e.target.value}))} />
           </div>
@@ -98,13 +107,36 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Label className="text-zinc-400">Obra</Label>
             <Input required value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
           </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Valor (R$)</Label>
-            <Input type="number" step="0.01" required value={formData.valor ?? ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, valor: e.target.value === "" ? undefined : Number(e.target.value)}))} />
+
+          {/* Seção: Dados Cadastrais */}
+          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dados Cadastrais</h3>
           </div>
 
-          <div className="col-span-1 md:col-span-2 border-t border-zinc-800 pt-4 mt-2">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Status e Prazos</h3>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">CNPJ</Label>
+            <Input value={formData.cnpj || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, cnpj: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Responsável</Label>
+            <Input value={formData.responsavel || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, responsavel: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Cidade</Label>
+            <Input value={formData.cidade || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, cidade: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Telefone</Label>
+            <Input value={formData.telefone || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, telefone: e.target.value}))} />
+          </div>
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">E-mail</Label>
+            <Input type="email" value={formData.email || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
+          </div>
+
+          {/* Seção: Status e Planejamento */}
+          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Status e Planejamento</h3>
           </div>
 
           <div className="space-y-2">
@@ -129,6 +161,15 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Comentário da Última Ação</Label>
+            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
+          </div>
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Próxima Ação Planejada</Label>
+            <Input value={formData.acaoFutura || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, acaoFutura: e.target.value}))} />
           </div>
 
           <div className="col-span-1 md:col-span-2 pt-4">
