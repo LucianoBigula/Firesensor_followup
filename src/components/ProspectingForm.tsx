@@ -60,7 +60,7 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-zinc-900 border-zinc-800 text-white">
+      <DialogContent className="sm:max-w-[600px] bg-zinc-900 border-zinc-800 text-white outline-none">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">
             {initialData ? "Editar Prospecção" : "Registrar Nova Prospecção"}
@@ -93,28 +93,38 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Origem do Lead</Label>
-            <Select onValueChange={(v: OrigemLead) => setFormData(prev => ({...prev, origem: v}))} value={formData.origem || "Indicação"}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+            <Select 
+              onValueChange={(v: OrigemLead) => setFormData(prev => ({...prev, origem: v}))} 
+              value={formData.origem || "Indicação"}
+            >
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue placeholder="Selecione a origem" />
+              </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectItem value="Indicação">🤝 Indicação</SelectItem>
-                <SelectItem value="Site/Google">🌐 Site/Google</SelectItem>
-                <SelectItem value="LinkedIn">💼 LinkedIn</SelectItem>
-                <SelectItem value="Cold Call">📞 Cold Call</SelectItem>
-                <SelectItem value="Evento">🎪 Evento</SelectItem>
-                <SelectItem value="Outros">➕ Outros</SelectItem>
+                <SelectItem value="Indicação">Indicação</SelectItem>
+                <SelectItem value="Site/Google">Site/Google</SelectItem>
+                <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                <SelectItem value="Cold Call">Cold Call</SelectItem>
+                <SelectItem value="Evento">Evento</SelectItem>
+                <SelectItem value="Outros">Outros</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Status</Label>
-            <Select onValueChange={(v: StatusProspeccao) => setFormData(prev => ({...prev, status: v}))} value={formData.status || "Novo Lead"}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+            <Select 
+              onValueChange={(v: StatusProspeccao) => setFormData(prev => ({...prev, status: v}))} 
+              value={formData.status || "Novo Lead"}
+            >
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectItem value="Novo Lead">✨ Novo Lead</SelectItem>
-                <SelectItem value="Em Contato">💬 Em Contato</SelectItem>
-                <SelectItem value="Qualificado">✅ Qualificado</SelectItem>
-                <SelectItem value="Desqualificado">❌ Desqualificado</SelectItem>
-                <SelectItem value="Virou Proposta">🚀 Virou Proposta</SelectItem>
+                <SelectItem value="Novo Lead">Novo Lead</SelectItem>
+                <SelectItem value="Em Contato">Em Contato</SelectItem>
+                <SelectItem value="Qualificado">Qualificado</SelectItem>
+                <SelectItem value="Desqualificado">Desqualificado</SelectItem>
+                <SelectItem value="Virou Proposta">Virou Proposta</SelectItem>
               </SelectContent>
             </Select>
           </div>
