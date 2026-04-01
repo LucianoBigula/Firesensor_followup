@@ -63,14 +63,53 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
+  // Helper to migrate prospect to follow-up
+  const migrateToFollowUp = (prospect: Prospecting) => {
+    const newFollowUp: FollowUp = {
+      id: Math.random().toString(36).substr(2, 9),
+      vendedor: prospect.vendedor,
+      integrador: prospect.empresa,
+      responsavel: prospect.contato,
+      telefone: prospect.telefone,
+      email: prospect.email,
+      dataAtualizacao: new Date().toISOString().split('T')[0],
+      numeroProposta: "PENDENTE",
+      obra: "A DEFINIR",
+      valor: 0,
+      temperatura: 'Morna',
+      status: 'Em Andamento',
+      expectativa: '30 dias',
+      diaSemana: 'Segunda',
+      semanaMes: 'Semana 1',
+      comentarioAcao: `Migrado da prospecção em ${new Date().toLocaleDateString()}`,
+      acaoFutura: "Definir número da proposta e obra"
+    };
+    
+    setFollowUps(prev => [newFollowUp, ...prev]);
+    showSuccess(`Nova proposta gerada automaticamente para ${prospect.empresa}!`);
+  };
+
   // Handlers
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
   const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
 
-  const handleAddProspect = (newProspect: Prospecting) => setProspects([newProspect, ...prospects]);
-  const handleUpdateProspect = (updated: Prospecting) => setProspects(prospects.map(item => item.id === updated.id ? updated : item));
-  const handleDeleteProspect = (id: string) => setProspects(prospects.filter(item => item.id !== id));
+  const handleAddProspect = (newProspect: Prospecting) => {
+    setProspects([newProspect, ...prospects]);
+    if (newProspect.status === 'Virou Proposta') {
+      migrateToFollowUp(newProspect);
+    }
+  };
+
+  const handleUpdateProspect = (updated: Prospecting) => {
+    const oldProspect = prospects.find(p => p.id === updated.id);
+    setProspects(prospects.map(item => item.id === updated.id ? updated : item));
+    
+    // Se o status mudou para 'Virou Proposta' agora
+    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
+      migrateToFollowUp(updated);
+    }
+  };
 
   const handleClearAll = () => {
     setFollowUps([]);
@@ -274,13 +313,11 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="followup" className="space-y-6 outline-none">
-            {/* Agora passando filteredFollowUps para recalcular os cards */}
             <FollowUpStats data={filteredFollowUps} />
             <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
 
           <TabsContent value="dashboard" className="outline-none">
-            {/* Agora passando filteredFollowUps para recalcular os gráficos */}
             <FollowUpDashboard data={filteredFollowUps} />
           </TabsContent>
         </Tabs>
