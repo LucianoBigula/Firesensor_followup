@@ -111,6 +111,13 @@ const Index = () => {
     }
   };
 
+  const handleDeleteProspect = (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir esta prospecção?")) {
+      setProspects(prospects.filter(item => item.id !== id));
+      showSuccess("Prospecção removida com sucesso.");
+    }
+  };
+
   const handleClearAll = () => {
     setFollowUps([]);
     setProspects([]);
