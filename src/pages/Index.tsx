@@ -132,8 +132,9 @@ const Index = () => {
     setSelectedVendedorToClear("");
   };
 
-  const handleImportData = (newData: FollowUp[]) => {
-    setFollowUps([...newData, ...followUps]);
+  const handleImportData = (newFollowUps: FollowUp[], newProspects: Prospecting[]) => {
+    setFollowUps([...newFollowUps, ...followUps]);
+    setProspects([...newProspects, ...prospects]);
   };
 
   const handleManualSave = () => {
@@ -195,7 +196,11 @@ const Index = () => {
               />
             </div>
 
-            <FollowUpActions data={followUps} onImport={handleImportData} />
+            <FollowUpActions 
+              followUps={followUps} 
+              prospects={prospects} 
+              onImport={handleImportData} 
+            />
 
             <Button onClick={handleManualSave} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300">
               <Save className="mr-2 h-4 w-4" /> Salvar

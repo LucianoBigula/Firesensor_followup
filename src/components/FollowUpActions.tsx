@@ -1,28 +1,37 @@
-import { Button } from "@/components/ui/input";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Download, Upload } from "lucide-react";
 import { FollowUp } from "@/types/follow-up";
+import { Prospecting } from "@/types/prospecting";
 import { showSuccess, showError } from "@/utils/toast";
 import { useRef } from "react";
 
 interface FollowUpActionsProps {
-  data: FollowUp[];
-  onImport: (data: FollowUp[]) => void;
+  followUps: FollowUp[];
+  prospects: Prospecting[];
+  onImport: (followUps: FollowUp[], prospects: Prospecting[]) => void;
 }
 
-export const FollowUpActions = ({ data, onImport }: FollowUpActionsProps) => {
+export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActionsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
-    if (data.length === 0) {
+    if (followUps.length === 0 && prospects.length === 0) {
       showError("Não há dados para exportar.");
       return;
     }
 
-    const dataStr = JSON.stringify(data, null, 2);
+    // Criamos um objeto unificado para exportação
+    const exportData = {
+      followUps,
+      prospects,
+      exportDate: new Date().toISOString(),
+      version: "2.0"
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = `follow-up-firesensor-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `firesensor-comercial-${new Date().toISOString().split('T')[0]}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -40,8 +49,13 @@ export const FollowUpActions = ({ data, onImport }: FollowUpActionsProps) => {
     reader.onload = (e) => {
       try {
         const json = JSON.parse(e.target?.result as string);
+        
+        // Suporte ao formato novo (objeto com chaves) e antigo (apenas array de follow-ups)
         if (Array.isArray(json)) {
-          onImport(json);
+          onImport(json, []);
+          showSuccess("Dados importados (formato antigo).");
+        } else if (json.followUps || json.prospects) {
+          onImport(json.followUps || [], json.prospects || []);
           showSuccess("Dados importados com sucesso!");
         } else {
           throw new Error("Formato de arquivo inválido");
@@ -52,7 +66,6 @@ export const FollowUpActions = ({ data, onImport }: FollowUpActionsProps) => {
     };
     reader.readAsText(file);
     
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
