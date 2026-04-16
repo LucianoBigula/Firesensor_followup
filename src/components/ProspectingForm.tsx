@@ -60,7 +60,7 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-zinc-900 border-zinc-800 text-white outline-none">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white outline-none">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">
             {initialData ? "Editar Prospecção" : "Registrar Nova Prospecção"}
