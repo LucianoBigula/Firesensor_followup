@@ -13,4 +13,5 @@ export interface Prospecting {
   status: StatusProspeccao;
   observacoes: string;
   proximoPasso: string;
+  dataProximoPasso?: string; // Nova data para agendamento
 }

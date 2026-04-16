@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Prospecting, StatusProspeccao, OrigemLead } from "@/types/prospecting";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Calendar } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 
 interface ProspectingFormProps {
@@ -25,7 +25,8 @@ const DEFAULT_FORM_STATE: Partial<Prospecting> = {
   telefone: "",
   email: "",
   observacoes: "",
-  proximoPasso: ""
+  proximoPasso: "",
+  dataProximoPasso: new Date().toISOString().split('T')[0]
 };
 
 export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFormProps) => {
@@ -83,6 +84,42 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
             <Label className="text-zinc-400">Contato Principal</Label>
             <Input required value={formData.contato || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, contato: e.target.value}))} />
           </div>
+          
+          <div className="col-span-1 md:col-span-2 border-t border-zinc-800 pt-4 mt-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Planejamento de Contato</h3>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Próximo Passo (O que fazer?)</Label>
+            <Input required value={formData.proximoPasso || ""} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Ex: Ligar para agendar visita" onChange={(e) => setFormData(prev => ({...prev, proximoPasso: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Data do Próximo Passo</Label>
+            <Input type="date" required value={formData.dataProximoPasso || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, dataProximoPasso: e.target.value}))} />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Status</Label>
+            <Select 
+              onValueChange={(v: StatusProspeccao) => setFormData(prev => ({...prev, status: v}))} 
+              value={formData.status || "Novo Lead"}
+            >
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectItem value="Novo Lead">Novo Lead</SelectItem>
+                <SelectItem value="Em Contato">Em Contato</SelectItem>
+                <SelectItem value="Qualificado">Qualificado</SelectItem>
+                <SelectItem value="Desqualificado">Desqualificado</SelectItem>
+                <SelectItem value="Virou Proposta">Virou Proposta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 border-t border-zinc-800 pt-4 mt-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Dados de Contato e Notas</h3>
+          </div>
+
           <div className="space-y-2">
             <Label className="text-zinc-400">Telefone</Label>
             <Input value={formData.telefone || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, telefone: e.target.value}))} />
@@ -110,32 +147,11 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Status</Label>
-            <Select 
-              onValueChange={(v: StatusProspeccao) => setFormData(prev => ({...prev, status: v}))} 
-              value={formData.status || "Novo Lead"}
-            >
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectItem value="Novo Lead">Novo Lead</SelectItem>
-                <SelectItem value="Em Contato">Em Contato</SelectItem>
-                <SelectItem value="Qualificado">Qualificado</SelectItem>
-                <SelectItem value="Desqualificado">Desqualificado</SelectItem>
-                <SelectItem value="Virou Proposta">Virou Proposta</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Observações Iniciais</Label>
+            <Label className="text-zinc-400">Observações</Label>
             <Textarea value={formData.observacoes || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, observacoes: e.target.value}))} />
           </div>
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Próximo Passo Planejado</Label>
-            <Input value={formData.proximoPasso || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, proximoPasso: e.target.value}))} />
-          </div>
+          
           <div className="col-span-1 md:col-span-2 pt-4">
             <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">Salvar Prospecção</Button>
           </div>

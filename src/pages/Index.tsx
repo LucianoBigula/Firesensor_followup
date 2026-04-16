@@ -8,7 +8,8 @@ import { FollowUpActions } from "@/components/FollowUpActions";
 import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter, Target, Download, Upload } from "lucide-react";
+import { ProspectingDashboard } from "@/components/ProspectingDashboard";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter, Target, Download, Upload, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -267,7 +268,7 @@ const Index = () => {
                 <List className="mr-2 h-4 w-4" /> Follow-up
               </TabsTrigger>
               <TabsTrigger value="dashboard" className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white">
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboards
               </TabsTrigger>
             </TabsList>
             
@@ -329,8 +330,20 @@ const Index = () => {
             <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
 
-          <TabsContent value="dashboard" className="outline-none">
-            <FollowUpDashboard data={filteredFollowUps} />
+          <TabsContent value="dashboard" className="outline-none space-y-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-emerald-500 font-bold text-lg border-b border-zinc-800 pb-2">
+                <Target className="h-5 w-5" /> Dashboard de Prospecção
+              </div>
+              <ProspectingDashboard data={prospects} />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-red-500 font-bold text-lg border-b border-zinc-800 pb-2">
+                <BarChart3 className="h-5 w-5" /> Dashboard de Follow-up
+              </div>
+              <FollowUpDashboard data={filteredFollowUps} />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
