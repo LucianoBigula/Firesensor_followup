@@ -58,7 +58,6 @@ const Index = () => {
   }, [followUps, prospects]);
 
   const migrateToFollowUp = (prospect: Prospecting) => {
-    // Verifica se já existe um follow-up para esta prospecção para evitar duplicidade
     const alreadyExists = followUps.some(f => f.prospectId === prospect.id);
     if (alreadyExists) return;
 
@@ -157,29 +156,42 @@ const Index = () => {
     showSuccess("Dados salvos!");
   };
 
-  // Busca aprimorada: remove espaços e ignora maiúsculas/minúsculas
+  // Lógica de busca aprimorada
   const normalizedSearch = searchTerm.toLowerCase().trim();
+  // Remove o '#' se o usuário digitar para facilitar a busca por número
+  const searchWithoutHash = normalizedSearch.replace('#', '');
 
   const filteredFollowUps = followUps.filter(item => {
+    const integrador = item.integrador.toLowerCase();
+    const obra = item.obra.toLowerCase();
+    const numeroProposta = item.numeroProposta.toLowerCase();
+    const vendedor = item.vendedor.toLowerCase();
+    const responsavel = (item.responsavel || "").toLowerCase();
+
     const matchesSearch = 
-      item.integrador.toLowerCase().includes(normalizedSearch) ||
-      item.obra.toLowerCase().includes(normalizedSearch) ||
-      item.numeroProposta.toLowerCase().includes(normalizedSearch) ||
-      item.vendedor.toLowerCase().includes(normalizedSearch) ||
-      (item.responsavel && item.responsavel.toLowerCase().includes(normalizedSearch));
+      integrador.includes(normalizedSearch) ||
+      obra.includes(normalizedSearch) ||
+      vendedor.includes(normalizedSearch) ||
+      responsavel.includes(normalizedSearch) ||
+      // Busca inteligente por número de proposta (com ou sem #)
+      numeroProposta.includes(normalizedSearch) ||
+      numeroProposta.includes(searchWithoutHash);
     
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
     return matchesSearch && matchesTemp && matchesStatus;
   });
 
-  const filteredProspects = prospects.filter(item => 
-    item.empresa.toLowerCase().includes(normalizedSearch) ||
-    item.vendedor.toLowerCase().includes(normalizedSearch) ||
-    item.contato.toLowerCase().includes(normalizedSearch)
-  );
+  const filteredProspects = prospects.filter(item => {
+    const empresa = item.empresa.toLowerCase();
+    const vendedor = item.vendedor.toLowerCase();
+    const contato = item.contato.toLowerCase();
 
-  // Lista de vendedores única e limpa (sem duplicatas por espaços ou caixa alta)
+    return empresa.includes(normalizedSearch) ||
+           vendedor.includes(normalizedSearch) ||
+           contato.includes(normalizedSearch);
+  });
+
   const uniqueVendedores = Array.from(
     new Set([
       ...followUps.map(f => f.vendedor.trim()), 
@@ -212,7 +224,7 @@ const Index = () => {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
-                placeholder="Buscar integrador, obra, vendedor..." 
+                placeholder="Nº Proposta, Integrador, Obra..." 
                 className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
