@@ -37,12 +37,18 @@ import {
 const Index = () => {
   const [activeTab, setActiveTab] = useState("followup");
   
-  // 1. ESTADO DOS DADOS
+  // 1. ESTADO DOS DADOS COM NORMALIZAÇÃO NO CARREGAMENTO
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Garante que os dados carregados estejam limpos
+      return parsed.map((item: any) => ({
+        ...item,
+        status: String(item.status || "").trim(),
+        temperatura: String(item.temperatura || "").trim()
+      }));
     } catch (e) { return []; }
   });
 
@@ -50,7 +56,11 @@ const Index = () => {
     const saved = localStorage.getItem("firesensor_prospecting");
     if (!saved) return [];
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      return parsed.map((item: any) => ({
+        ...item,
+        status: String(item.status || "").trim()
+      }));
     } catch (e) { return []; }
   });
   
@@ -70,32 +80,34 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // 4. FLUXO DE FILTRAGEM REFEITO DO ZERO (ESTEIRA LINEAR)
+  // 4. LÓGICA DE FILTRAGEM ABSOLUTA (ESTEIRA DE EXCLUSÃO)
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // PORTÃO 1: STATUS (Prioridade Máxima)
+      // REGRA 1: STATUS (Se selecionado, a exclusão é imediata e absoluta)
       if (statusFilter !== "all") {
-        if (item.status !== statusFilter) return false;
+        const itemStatus = String(item.status || "").trim();
+        if (itemStatus !== statusFilter) return false;
       }
 
-      // PORTÃO 2: TEMPERATURA
+      // REGRA 2: TEMPERATURA
       if (tempFilter !== "all") {
-        if (item.temperatura !== tempFilter) return false;
+        const itemTemp = String(item.temperatura || "").trim();
+        if (itemTemp !== tempFilter) return false;
       }
 
-      // PORTÃO 3: NÚMERO DA PROPOSTA
+      // REGRA 3: NÚMERO DA PROPOSTA
       if (proposalFilter) {
         const cleanItemProp = normalizeText(item.numeroProposta).replace('#', '');
         const cleanSearchProp = normalizeText(proposalFilter).replace('#', '');
         if (!cleanItemProp.includes(cleanSearchProp)) return false;
       }
 
-      // PORTÃO 4: INTEGRADOR
+      // REGRA 4: INTEGRADOR
       if (integradorFilter) {
         if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
       }
 
-      // PORTÃO 5: BUSCA GLOBAL (Vendedor, Obra, Cidade)
+      // REGRA 5: BUSCA GLOBAL
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matchesGlobal = 
@@ -107,16 +119,14 @@ const Index = () => {
         if (!matchesGlobal) return false;
       }
 
-      // Se passou por todos os portões, o registro é exibido
       return true;
     });
   }, [followUps, statusFilter, tempFilter, proposalFilter, integradorFilter, searchTerm]);
 
-  // Filtragem de Prospecção (Mesma lógica linear)
   const filteredProspects = useMemo(() => {
     return prospects.filter(item => {
       if (prospectStatusFilter !== "all") {
-        if (item.status !== prospectStatusFilter) return false;
+        if (String(item.status).trim() !== prospectStatusFilter) return false;
       }
       if (searchTerm) {
         const search = normalizeText(searchTerm);
@@ -235,9 +245,11 @@ const Index = () => {
               </SelectContent>
             </Select>
           )}
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
-            <X className="h-4 w-4 mr-1" /> Limpar
-          </Button>
+          {(searchTerm || proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all" || prospectStatusFilter !== "all") && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
+              <X className="h-4 w-4 mr-1" /> Limpar Filtros
+            </Button>
+          )}
         </div>
 
         {/* Conteúdo Principal */}
