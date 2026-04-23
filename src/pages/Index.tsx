@@ -9,11 +9,11 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash, Building2, X, Filter } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, Target, BarChart3, Hash, Building2, X, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { showSuccess, showError } from "@/utils/toast";
+import { showSuccess } from "@/utils/toast";
 import { normalizeText } from "@/lib/utils";
 import {
   AlertDialog,
@@ -62,36 +62,34 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Lógica de Filtragem de Follow-up (ESTRITA E NORMALIZADA)
+  // Lógica de Filtragem de Follow-up (ESTRITA E ABSOLUTA)
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // 1. Filtro de Status (Comparação Normalizada)
+      // 1. FILTRO DE STATUS (Prioridade Máxima e Comparação Exata)
       if (statusFilter !== "all") {
-        const itemStatus = normalizeText(item.status);
-        const filterStatus = normalizeText(statusFilter);
-        if (itemStatus !== filterStatus) return false;
+        // Comparamos o valor bruto e o normalizado para garantir que nada escape
+        const itemStatus = String(item.status || "").trim();
+        if (itemStatus !== statusFilter) return false;
       }
       
-      // 2. Filtro de Temperatura
+      // 2. FILTRO DE TEMPERATURA
       if (tempFilter !== "all") {
-        const itemTemp = normalizeText(item.temperatura);
-        const filterTemp = normalizeText(tempFilter);
-        if (itemTemp !== filterTemp) return false;
+        if (item.temperatura !== tempFilter) return false;
       }
       
-      // 3. Filtro de Proposta
+      // 3. FILTRO DE PROPOSTA
       if (proposalFilter) {
         const searchProp = normalizeText(proposalFilter).replace('#', '');
         const itemProp = normalizeText(item.numeroProposta).replace('#', '');
         if (!itemProp.includes(searchProp)) return false;
       }
       
-      // 4. Filtro de Integrador
+      // 4. FILTRO DE INTEGRADOR
       if (integradorFilter) {
         if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
       }
       
-      // 5. Busca Geral
+      // 5. BUSCA GERAL (Aplica-se apenas se passar pelos filtros acima)
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matches = 
@@ -110,9 +108,7 @@ const Index = () => {
   // Lógica de Filtragem de Prospecção
   const filteredProspects = useMemo(() => {
     return prospects.filter(item => {
-      if (prospectStatusFilter !== "all") {
-        if (normalizeText(item.status) !== normalizeText(prospectStatusFilter)) return false;
-      }
+      if (prospectStatusFilter !== "all" && item.status !== prospectStatusFilter) return false;
       
       if (searchTerm) {
         const search = normalizeText(searchTerm);
