@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Prospecting, StatusProspeccao, OrigemLead } from "@/types/prospecting";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserPlus, Calendar } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 
 interface ProspectingFormProps {
@@ -61,7 +61,7 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white outline-none">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">
             {initialData ? "Editar Prospecção" : "Registrar Nova Prospecção"}

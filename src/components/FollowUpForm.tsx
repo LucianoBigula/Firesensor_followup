@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FollowUp, Temperatura, Expectativa, Status, DiaSemana, SemanaMes } from "@/types/follow-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 
 interface FollowUpFormProps {
   onSave: (followUp: FollowUp) => void;
@@ -40,6 +40,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>(DEFAULT_FORM_STATE);
 
+  // Sincroniza os dados quando o diálogo abre ou os dados iniciais mudam
   useEffect(() => {
     if (open) {
       setFormData(initialData ? { ...initialData } : { ...DEFAULT_FORM_STATE });
@@ -49,7 +50,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Garantir que o valor seja um número válido para não quebrar os gráficos
     const valorNumerico = Number(formData.valor);
     if (isNaN(valorNumerico)) {
       showError("Valor inválido.");
@@ -78,14 +78,13 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white outline-none">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-zinc-900 border-zinc-800 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white">
             {initialData ? "Editar Follow-up" : "Registrar Novo Follow-up"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-          {/* Seção: Informações Básicas */}
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mb-2">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Informações da Proposta</h3>
           </div>
@@ -115,7 +114,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input required value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
           </div>
 
-          {/* Seção: Dados Cadastrais */}
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dados Cadastrais</h3>
           </div>
@@ -141,7 +139,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input type="email" value={formData.email || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
           </div>
 
-          {/* Seção: Ações e Status */}
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Ações e Status</h3>
           </div>
