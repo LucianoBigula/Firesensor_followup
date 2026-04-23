@@ -62,65 +62,79 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Lógica de Filtragem de Follow-up (ESTRITA E ABSOLUTA)
+  // Lógica de Filtragem de Follow-up (SEQUENCIAL E INFALÍVEL)
   const filteredFollowUps = useMemo(() => {
-    return followUps.filter(item => {
-      // 1. FILTRO DE STATUS (Prioridade Máxima e Comparação Exata)
-      if (statusFilter !== "all") {
-        // Comparamos o valor bruto e o normalizado para garantir que nada escape
-        const itemStatus = String(item.status || "").trim();
-        if (itemStatus !== statusFilter) return false;
-      }
-      
-      // 2. FILTRO DE TEMPERATURA
-      if (tempFilter !== "all") {
-        if (item.temperatura !== tempFilter) return false;
-      }
-      
-      // 3. FILTRO DE PROPOSTA
-      if (proposalFilter) {
-        const searchProp = normalizeText(proposalFilter).replace('#', '');
-        const itemProp = normalizeText(item.numeroProposta).replace('#', '');
-        if (!itemProp.includes(searchProp)) return false;
-      }
-      
-      // 4. FILTRO DE INTEGRADOR
-      if (integradorFilter) {
-        if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
-      }
-      
-      // 5. BUSCA GERAL (Aplica-se apenas se passar pelos filtros acima)
-      if (searchTerm) {
-        const search = normalizeText(searchTerm);
-        const matches = 
-          normalizeText(item.integrador).includes(search) ||
-          normalizeText(item.obra).includes(search) ||
-          normalizeText(item.vendedor).includes(search) ||
-          normalizeText(item.numeroProposta).includes(search) ||
-          normalizeText(item.cidade || "").includes(search);
-        if (!matches) return false;
-      }
-      
-      return true;
-    });
+    let result = [...followUps];
+
+    // 1. Filtro de Status (Obrigatório e Excludente)
+    if (statusFilter !== "all") {
+      result = result.filter(item => {
+        const itemStatus = String(item.status || "").trim().toLowerCase();
+        const filterValue = String(statusFilter).trim().toLowerCase();
+        return itemStatus === filterValue;
+      });
+    }
+
+    // 2. Filtro de Temperatura
+    if (tempFilter !== "all") {
+      result = result.filter(item => {
+        const itemTemp = String(item.temperatura || "").trim().toLowerCase();
+        const filterValue = String(tempFilter).trim().toLowerCase();
+        return itemTemp === filterValue;
+      });
+    }
+
+    // 3. Filtro de Proposta
+    if (proposalFilter) {
+      const search = normalizeText(proposalFilter).replace('#', '');
+      result = result.filter(item => 
+        normalizeText(item.numeroProposta).replace('#', '').includes(search)
+      );
+    }
+
+    // 4. Filtro de Integrador
+    if (integradorFilter) {
+      const search = normalizeText(integradorFilter);
+      result = result.filter(item => 
+        normalizeText(item.integrador).includes(search)
+      );
+    }
+
+    // 5. Busca Geral
+    if (searchTerm) {
+      const search = normalizeText(searchTerm);
+      result = result.filter(item => 
+        normalizeText(item.integrador).includes(search) ||
+        normalizeText(item.obra).includes(search) ||
+        normalizeText(item.vendedor).includes(search) ||
+        normalizeText(item.numeroProposta).includes(search) ||
+        normalizeText(item.cidade || "").includes(search)
+      );
+    }
+
+    return result;
   }, [followUps, statusFilter, tempFilter, proposalFilter, integradorFilter, searchTerm]);
 
   // Lógica de Filtragem de Prospecção
   const filteredProspects = useMemo(() => {
-    return prospects.filter(item => {
-      if (prospectStatusFilter !== "all" && item.status !== prospectStatusFilter) return false;
-      
-      if (searchTerm) {
-        const search = normalizeText(searchTerm);
-        const matches = 
-          normalizeText(item.empresa).includes(search) ||
-          normalizeText(item.vendedor).includes(search) ||
-          normalizeText(item.contato).includes(search);
-        if (!matches) return false;
-      }
-      
-      return true;
-    });
+    let result = [...prospects];
+
+    if (prospectStatusFilter !== "all") {
+      result = result.filter(item => 
+        String(item.status).trim().toLowerCase() === String(prospectStatusFilter).trim().toLowerCase()
+      );
+    }
+
+    if (searchTerm) {
+      const search = normalizeText(searchTerm);
+      result = result.filter(item => 
+        normalizeText(item.empresa).includes(search) ||
+        normalizeText(item.vendedor).includes(search) ||
+        normalizeText(item.contato).includes(search)
+      );
+    }
+
+    return result;
   }, [prospects, prospectStatusFilter, searchTerm]);
 
   const migrateToFollowUp = (prospect: Prospecting) => {
