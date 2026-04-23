@@ -56,7 +56,7 @@ const Index = () => {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [proposalFilter, setProposalFilter] = useState("");
-  const [integradorFilter, setIntegradorFilter] = useState(""); // Novo filtro avançado
+  const [integradorFilter, setIntegradorFilter] = useState(""); 
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -164,35 +164,43 @@ const Index = () => {
     showSuccess("Dados salvos!");
   };
 
-  // Lógica de busca avançada
+  // Lógica de busca EXCLUSIVA e RESTRITIVA
   const normalizedSearch = normalizeText(searchTerm);
   const normalizedProposal = normalizeText(proposalFilter).replace('#', '');
   const normalizedIntegrador = normalizeText(integradorFilter);
 
   const filteredFollowUps = followUps.filter(item => {
-    // Filtro por Número de Proposta (Exato se preenchido)
-    if (normalizedProposal !== "") {
-      const itemProposal = normalizeText(item.numeroProposta).replace('#', '');
-      if (itemProposal !== normalizedProposal) return false;
+    const itemIntegrador = normalizeText(item.integrador);
+    const itemObra = normalizeText(item.obra);
+    const itemVendedor = normalizeText(item.vendedor);
+    const itemProposta = normalizeText(item.numeroProposta).replace('#', '');
+
+    // 1. Filtro de Proposta (Se preenchido, deve ser exato)
+    if (normalizedProposal !== "" && itemProposta !== normalizedProposal) {
+      return false;
     }
 
-    // Filtro Avançado por Integrador (se preenchido)
-    if (normalizedIntegrador !== "") {
-      const itemIntegrador = normalizeText(item.integrador);
-      if (!itemIntegrador.includes(normalizedIntegrador)) return false;
+    // 2. Filtro de Integrador (Se preenchido, deve conter o termo)
+    if (normalizedIntegrador !== "" && !itemIntegrador.includes(normalizedIntegrador)) {
+      return false;
     }
 
-    // Filtro Geral (Busca em múltiplos campos)
-    const matchesSearch = normalizedSearch === "" || 
-      normalizeText(item.integrador).includes(normalizedSearch) ||
-      normalizeText(item.obra).includes(normalizedSearch) ||
-      normalizeText(item.vendedor).includes(normalizedSearch) ||
-      normalizeText(item.numeroProposta).includes(normalizedSearch);
-    
+    // 3. Busca Geral (Só aplica se os filtros específicos acima permitirem)
+    if (normalizedSearch !== "") {
+      const matchesSearch = 
+        itemIntegrador.includes(normalizedSearch) ||
+        itemObra.includes(normalizedSearch) ||
+        itemVendedor.includes(normalizedSearch) ||
+        itemProposta.includes(normalizedSearch);
+      
+      if (!matchesSearch) return false;
+    }
+
+    // 4. Filtros de Categoria (Selects)
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
     
-    return matchesSearch && matchesTemp && matchesStatus;
+    return matchesTemp && matchesStatus;
   });
 
   const filteredProspects = prospects.filter(item => {
