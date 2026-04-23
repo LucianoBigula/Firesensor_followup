@@ -6,6 +6,7 @@ export type SemanaMes = 'Semana 1' | 'Semana 2' | 'Semana 3' | 'Semana 4' | 'Sem
 
 export interface FollowUp {
   id: string;
+  prospectId?: string; // ID da prospecção de origem para evitar duplicatas
   dataAtualizacao: string;
   numeroProposta: string;
   vendedor: string;
@@ -22,7 +23,6 @@ export interface FollowUp {
   cidade?: string;
   email?: string;
   telefone?: string;
-  // Novos campos de histórico e planejamento
   comentarioAcao?: string;
   acaoFutura?: string;
 }

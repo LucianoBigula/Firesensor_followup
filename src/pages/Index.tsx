@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FollowUp, Temperatura, Status } from "@/types/follow-up";
+import { FollowUp } from "@/types/follow-up";
 import { Prospecting } from "@/types/prospecting";
 import { FollowUpStats } from "@/components/FollowUpStats";
 import { FollowUpTable } from "@/components/FollowUpTable";
@@ -9,7 +9,7 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Filter, Target, Download, Upload, BarChart3 } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -34,18 +34,12 @@ import {
 } from "@/components/ui/select";
 
 const Index = () => {
-  // Follow-ups State
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
-    const parsed = JSON.parse(saved);
-    return parsed.map((item: any) => ({
-      ...item,
-      dataAtualizacao: item.dataAtualizacao || item.dataEnvio || new Date().toISOString().split('T')[0]
-    }));
+    return JSON.parse(saved);
   });
 
-  // Prospecting State
   const [prospects, setProspects] = useState<Prospecting[]>(() => {
     const saved = localStorage.getItem("firesensor_prospecting");
     return saved ? JSON.parse(saved) : [];
@@ -57,20 +51,23 @@ const Index = () => {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
-  // Auto-save
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
     localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Helper to migrate prospect to follow-up
   const migrateToFollowUp = (prospect: Prospecting) => {
+    // Verifica se já existe um follow-up para esta prospecção para evitar duplicidade
+    const alreadyExists = followUps.some(f => f.prospectId === prospect.id);
+    if (alreadyExists) return;
+
     const newFollowUp: FollowUp = {
       id: Math.random().toString(36).substr(2, 9),
-      vendedor: prospect.vendedor,
-      integrador: prospect.empresa,
-      responsavel: prospect.contato,
+      prospectId: prospect.id,
+      vendedor: prospect.vendedor.trim(),
+      integrador: prospect.empresa.trim(),
+      responsavel: prospect.contato.trim(),
       telefone: prospect.telefone,
       email: prospect.email,
       dataAtualizacao: new Date().toISOString().split('T')[0],
@@ -87,87 +84,112 @@ const Index = () => {
     };
     
     setFollowUps(prev => [newFollowUp, ...prev]);
-    showSuccess(`Nova proposta gerada automaticamente para ${prospect.empresa}!`);
+    showSuccess(`Nova proposta gerada para ${prospect.empresa}!`);
   };
 
-  // Handlers
-  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
-  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
+  const handleAddFollowUp = (newFollowUp: FollowUp) => {
+    setFollowUps([
+      { ...newFollowUp, vendedor: newFollowUp.vendedor.trim(), integrador: newFollowUp.integrador.trim() }, 
+      ...followUps
+    ]);
+  };
+
+  const handleUpdateFollowUp = (updated: FollowUp) => {
+    setFollowUps(followUps.map(item => item.id === updated.id ? {
+      ...updated, 
+      vendedor: updated.vendedor.trim(), 
+      integrador: updated.integrador.trim()
+    } : item));
+  };
+
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
 
   const handleAddProspect = (newProspect: Prospecting) => {
-    setProspects([newProspect, ...prospects]);
-    if (newProspect.status === 'Virou Proposta') {
-      migrateToFollowUp(newProspect);
+    const cleanedProspect = { ...newProspect, vendedor: newProspect.vendedor.trim(), empresa: newProspect.empresa.trim() };
+    setProspects([cleanedProspect, ...prospects]);
+    if (cleanedProspect.status === 'Virou Proposta') {
+      migrateToFollowUp(cleanedProspect);
     }
   };
 
   const handleUpdateProspect = (updated: Prospecting) => {
+    const cleanedUpdated = { ...updated, vendedor: updated.vendedor.trim(), empresa: updated.empresa.trim() };
     const oldProspect = prospects.find(p => p.id === updated.id);
-    setProspects(prospects.map(item => item.id === updated.id ? updated : item));
+    setProspects(prospects.map(item => item.id === updated.id ? cleanedUpdated : item));
     
-    // Se o status mudou para 'Virou Proposta' agora
-    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
-      migrateToFollowUp(updated);
+    if (cleanedUpdated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
+      migrateToFollowUp(cleanedUpdated);
     }
   };
 
   const handleDeleteProspect = (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta prospecção?")) {
       setProspects(prospects.filter(item => item.id !== id));
-      showSuccess("Prospecção removida com sucesso.");
+      showSuccess("Prospecção removida.");
     }
   };
 
   const handleClearAll = () => {
     setFollowUps([]);
     setProspects([]);
-    showSuccess("Todos os registros foram removidos.");
+    showSuccess("Todos os registros removidos.");
   };
 
   const handleClearByVendedor = () => {
     if (!selectedVendedorToClear) return;
-    setFollowUps(followUps.filter(f => f.vendedor !== selectedVendedorToClear));
-    setProspects(prospects.filter(p => p.vendedor !== selectedVendedorToClear));
-    showSuccess(`Registros do vendedor ${selectedVendedorToClear} removidos.`);
+    const vendedorToMatch = selectedVendedorToClear.toLowerCase().trim();
+    setFollowUps(followUps.filter(f => f.vendedor.toLowerCase().trim() !== vendedorToMatch));
+    setProspects(prospects.filter(p => p.vendedor.toLowerCase().trim() !== vendedorToMatch));
+    showSuccess(`Registros de ${selectedVendedorToClear} removidos.`);
     setSelectedVendedorToClear("");
   };
 
   const handleImportData = (newFollowUps: FollowUp[], newProspects: Prospecting[]) => {
     setFollowUps([...newFollowUps, ...followUps]);
     setProspects([...newProspects, ...prospects]);
+    showSuccess("Dados importados com sucesso.");
   };
 
   const handleManualSave = () => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
     localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
-    showSuccess("Dados salvos com sucesso!");
+    showSuccess("Dados salvos!");
   };
+
+  // Busca aprimorada: remove espaços e ignora maiúsculas/minúsculas
+  const normalizedSearch = searchTerm.toLowerCase().trim();
 
   const filteredFollowUps = followUps.filter(item => {
     const matchesSearch = 
-      item.integrador.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.obra.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.numeroProposta.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.vendedor.toLowerCase().includes(searchTerm.toLowerCase());
+      item.integrador.toLowerCase().includes(normalizedSearch) ||
+      item.obra.toLowerCase().includes(normalizedSearch) ||
+      item.numeroProposta.toLowerCase().includes(normalizedSearch) ||
+      item.vendedor.toLowerCase().includes(normalizedSearch) ||
+      (item.responsavel && item.responsavel.toLowerCase().includes(normalizedSearch));
+    
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
     return matchesSearch && matchesTemp && matchesStatus;
   });
 
   const filteredProspects = prospects.filter(item => 
-    item.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.vendedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.contato.toLowerCase().includes(searchTerm.toLowerCase())
+    item.empresa.toLowerCase().includes(normalizedSearch) ||
+    item.vendedor.toLowerCase().includes(normalizedSearch) ||
+    item.contato.toLowerCase().includes(normalizedSearch)
   );
 
-  const uniqueVendedores = Array.from(new Set([...followUps.map(f => f.vendedor), ...prospects.map(v => v.vendedor)])).sort();
+  // Lista de vendedores única e limpa (sem duplicatas por espaços ou caixa alta)
+  const uniqueVendedores = Array.from(
+    new Set([
+      ...followUps.map(f => f.vendedor.trim()), 
+      ...prospects.map(v => v.vendedor.trim())
+    ])
+  ).sort((a, b) => a.localeCompare(b));
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
@@ -190,7 +212,7 @@ const Index = () => {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
-                placeholder="Buscar..." 
+                placeholder="Buscar integrador, obra, vendedor..." 
                 className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -257,7 +279,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Tabs Navigation */}
         <Tabs defaultValue="prospecting" className="space-y-6">
           <div className="flex items-center justify-between">
             <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
