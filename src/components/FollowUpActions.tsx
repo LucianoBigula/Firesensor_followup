@@ -14,23 +14,38 @@ interface FollowUpActionsProps {
 export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActionsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Função para limpar e padronizar dados importados
+  const sanitizeData = (data: any[]) => {
+    return data.map(item => ({
+      ...item,
+      // Remove espaços e garante a primeira letra maiúscula para o status
+      status: typeof item.status === 'string' 
+        ? item.status.trim()
+        : item.status,
+      temperatura: typeof item.temperatura === 'string'
+        ? item.temperatura.trim()
+        : item.temperatura,
+      valor: typeof item.valor === 'string' 
+        ? parseFloat(item.valor.replace(/[^\d,.-]/g, '').replace(',', '.')) 
+        : (item.valor || 0)
+    }));
+  };
+
   const handleExport = () => {
     if (followUps.length === 0 && prospects.length === 0) {
       showError("Não há dados para exportar.");
       return;
     }
 
-    // Criamos um objeto unificado para exportação
     const exportData = {
       followUps,
       prospects,
       exportDate: new Date().toISOString(),
-      version: "2.0"
+      version: "2.1"
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
     const exportFileDefaultName = `firesensor-comercial-${new Date().toISOString().split('T')[0]}.json`;
     
     const linkElement = document.createElement('a');
@@ -50,50 +65,34 @@ export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActi
       try {
         const json = JSON.parse(e.target?.result as string);
         
-        // Suporte ao formato novo (objeto com chaves) e antigo (apenas array de follow-ups)
+        let importedFollowUps: FollowUp[] = [];
+        let importedProspects: Prospecting[] = [];
+
         if (Array.isArray(json)) {
-          onImport(json, []);
-          showSuccess("Dados importados (formato antigo).");
-        } else if (json.followUps || json.prospects) {
-          onImport(json.followUps || [], json.prospects || []);
-          showSuccess("Dados importados com sucesso!");
+          importedFollowUps = sanitizeData(json) as FollowUp[];
         } else {
-          throw new Error("Formato de arquivo inválido");
+          importedFollowUps = sanitizeData(json.followUps || []) as FollowUp[];
+          importedProspects = sanitizeData(json.prospects || []) as Prospecting[];
         }
+
+        onImport(importedFollowUps, importedProspects);
+        showSuccess("Dados importados e sanitizados com sucesso!");
       } catch (err) {
-        showError("Erro ao importar arquivo. Verifique se o formato é válido.");
+        showError("Erro ao importar arquivo. Verifique o formato.");
       }
     };
     reader.readAsText(file);
     
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="flex items-center gap-2">
-      <input
-        type="file"
-        accept=".json"
-        onChange={handleImport}
-        className="hidden"
-        ref={fileInputRef}
-      />
-      <ShadcnButton 
-        variant="outline" 
-        size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-      >
+      <input type="file" accept=".json" onChange={handleImport} className="hidden" ref={fileInputRef} />
+      <ShadcnButton variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white">
         <Upload className="mr-2 h-4 w-4" /> Importar
       </ShadcnButton>
-      <ShadcnButton 
-        variant="outline" 
-        size="sm"
-        onClick={handleExport}
-        className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-      >
+      <ShadcnButton variant="outline" size="sm" onClick={handleExport} className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white">
         <Download className="mr-2 h-4 w-4" /> Exportar
       </ShadcnButton>
     </div>

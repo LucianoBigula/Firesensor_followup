@@ -36,24 +36,40 @@ import {
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("prospecting");
+  
+  // Carregamento inicial com sanitização imediata
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const data = JSON.parse(saved);
+      // Sanitização preventiva: remove espaços e garante consistência
+      return data.map((item: any) => ({
+        ...item,
+        status: String(item.status || "").trim(),
+        temperatura: String(item.temperatura || "").trim()
+      }));
+    } catch (e) { return []; }
   });
 
   const [prospects, setProspects] = useState<Prospecting[]>(() => {
     const saved = localStorage.getItem("firesensor_prospecting");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const data = JSON.parse(saved);
+      return data.map((item: any) => ({
+        ...item,
+        status: String(item.status || "").trim()
+      }));
+    } catch (e) { return []; }
   });
   
-  // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState("");
   const [proposalFilter, setProposalFilter] = useState("");
   const [integradorFilter, setIntegradorFilter] = useState(""); 
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [prospectStatusFilter, setProspectStatusFilter] = useState<string>("all");
-  
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,25 +78,23 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Lógica de Filtragem de Follow-up (SEQUENCIAL E INFALÍVEL)
+  // Lógica de Filtragem (SEQUENCIAL E INFALÍVEL)
   const filteredFollowUps = useMemo(() => {
     let result = [...followUps];
 
     // 1. Filtro de Status (Obrigatório e Excludente)
     if (statusFilter !== "all") {
       result = result.filter(item => {
-        const itemStatus = String(item.status || "").trim().toLowerCase();
-        const filterValue = String(statusFilter).trim().toLowerCase();
-        return itemStatus === filterValue;
+        const itemStatus = String(item.status || "").trim();
+        return itemStatus === statusFilter;
       });
     }
 
     // 2. Filtro de Temperatura
     if (tempFilter !== "all") {
       result = result.filter(item => {
-        const itemTemp = String(item.temperatura || "").trim().toLowerCase();
-        const filterValue = String(tempFilter).trim().toLowerCase();
-        return itemTemp === filterValue;
+        const itemTemp = String(item.temperatura || "").trim();
+        return itemTemp === tempFilter;
       });
     }
 
@@ -115,16 +129,11 @@ const Index = () => {
     return result;
   }, [followUps, statusFilter, tempFilter, proposalFilter, integradorFilter, searchTerm]);
 
-  // Lógica de Filtragem de Prospecção
   const filteredProspects = useMemo(() => {
     let result = [...prospects];
-
     if (prospectStatusFilter !== "all") {
-      result = result.filter(item => 
-        String(item.status).trim().toLowerCase() === String(prospectStatusFilter).trim().toLowerCase()
-      );
+      result = result.filter(item => String(item.status).trim() === prospectStatusFilter);
     }
-
     if (searchTerm) {
       const search = normalizeText(searchTerm);
       result = result.filter(item => 
@@ -133,14 +142,12 @@ const Index = () => {
         normalizeText(item.contato).includes(search)
       );
     }
-
     return result;
   }, [prospects, prospectStatusFilter, searchTerm]);
 
   const migrateToFollowUp = (prospect: Prospecting) => {
     const alreadyExists = followUps.some(f => f.prospectId === prospect.id);
     if (alreadyExists) return;
-
     const newFollowUp: FollowUp = {
       id: Math.random().toString(36).substr(2, 9),
       prospectId: prospect.id,
@@ -161,7 +168,6 @@ const Index = () => {
       comentarioAcao: `Migrado da prospecção em ${new Date().toLocaleDateString()}`,
       acaoFutura: "Definir número da proposta e obra"
     };
-    
     setFollowUps(prev => [newFollowUp, ...prev]);
     showSuccess(`Nova proposta gerada para ${prospect.empresa}!`);
   };
@@ -169,25 +175,21 @@ const Index = () => {
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
   const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
-
   const handleAddProspect = (newProspect: Prospecting) => {
     setProspects([newProspect, ...prospects]);
     if (newProspect.status === 'Virou Proposta') migrateToFollowUp(newProspect);
   };
-
   const handleUpdateProspect = (updated: Prospecting) => {
     const oldProspect = prospects.find(p => p.id === updated.id);
     setProspects(prospects.map(item => item.id === updated.id ? updated : item));
     if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') migrateToFollowUp(updated);
   };
-
   const handleDeleteProspect = (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta prospecção?")) {
       setProspects(prospects.filter(item => item.id !== id));
       showSuccess("Prospecção removida.");
     }
   };
-
   const clearFilters = () => {
     setSearchTerm("");
     setProposalFilter("");
@@ -200,7 +202,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
@@ -214,11 +215,9 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
           <div className="flex flex-wrap items-center gap-3">
             <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps([...f, ...followUps]); setProspects([...p, ...prospects]); }} />
             <Button onClick={() => { localStorage.setItem("firesensor_followups", JSON.stringify(followUps)); showSuccess("Dados salvos!"); }} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
-            
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400"><Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo</Button></AlertDialogTrigger>
               <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
@@ -229,18 +228,15 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Barra de Filtros Global */}
         <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 text-zinc-400 mr-2">
             <Filter className="h-4 w-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Filtros</span>
           </div>
-
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <Input placeholder="Busca rápida..." className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full h-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-
           {activeTab === "followup" || activeTab === "dashboard" ? (
             <>
               <div className="relative w-40">
@@ -290,7 +286,6 @@ const Index = () => {
               </SelectContent>
             </Select>
           )}
-
           {(searchTerm || proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all" || prospectStatusFilter !== "all") && (
             <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
               <X className="h-4 w-4 mr-1" /> Limpar Filtros
@@ -305,13 +300,11 @@ const Index = () => {
               <TabsTrigger value="followup" className="data-[state=active]:bg-red-600 data-[state=active]:text-white"><List className="mr-2 h-4 w-4" /> Follow-up</TabsTrigger>
               <TabsTrigger value="dashboard" className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboards</TabsTrigger>
             </TabsList>
-            
             <div className="flex items-center gap-2">
               {activeTab === "prospecting" && <ProspectingForm onSave={handleAddProspect} />}
               {activeTab === "followup" && <FollowUpForm onSave={handleAddFollowUp} />}
             </div>
           </div>
-
           <TabsContent value="prospecting" className="outline-none space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Total de Leads</p><p className="text-2xl font-bold text-white">{filteredProspects.length}</p></div>
@@ -320,12 +313,10 @@ const Index = () => {
             </div>
             <ProspectingTable data={filteredProspects} onDelete={handleDeleteProspect} onUpdate={handleUpdateProspect} />
           </TabsContent>
-
           <TabsContent value="followup" className="space-y-6 outline-none">
             <FollowUpStats data={filteredFollowUps} />
             <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
-
           <TabsContent value="dashboard" className="outline-none space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-emerald-500 font-bold text-lg border-b border-zinc-800 pb-2"><Target className="h-5 w-5" /> Dashboard de Prospecção</div>
