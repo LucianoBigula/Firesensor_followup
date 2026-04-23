@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FollowUp } from "@/types/follow-up";
 import { Prospecting } from "@/types/prospecting";
 import { FollowUpStats } from "@/components/FollowUpStats";
@@ -9,7 +9,7 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash, Building2, X } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash, Building2, X, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -35,30 +35,25 @@ import {
 } from "@/components/ui/select";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("prospecting");
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
-    if (!saved) return [];
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      return [];
-    }
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [prospects, setProspects] = useState<Prospecting[]>(() => {
     const saved = localStorage.getItem("firesensor_prospecting");
-    try {
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
+    return saved ? JSON.parse(saved) : [];
   });
   
+  // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState("");
   const [proposalFilter, setProposalFilter] = useState("");
   const [integradorFilter, setIntegradorFilter] = useState(""); 
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [prospectStatusFilter, setProspectStatusFilter] = useState<string>("all");
+  
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
@@ -67,6 +62,54 @@ const Index = () => {
     localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
+
+  // Lógica de Filtragem de Follow-up (Rigorosa)
+  const filteredFollowUps = useMemo(() => {
+    return followUps.filter(item => {
+      // 1. Filtro de Status (Prioridade Absoluta)
+      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      
+      // 2. Filtro de Temperatura
+      if (tempFilter !== "all" && item.temperatura !== tempFilter) return false;
+      
+      // 3. Filtro de Proposta
+      if (proposalFilter && !normalizeText(item.numeroProposta).includes(normalizeText(proposalFilter))) return false;
+      
+      // 4. Filtro de Integrador
+      if (integradorFilter && !normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
+      
+      // 5. Busca Geral
+      if (searchTerm) {
+        const search = normalizeText(searchTerm);
+        const matches = 
+          normalizeText(item.integrador).includes(search) ||
+          normalizeText(item.obra).includes(search) ||
+          normalizeText(item.vendedor).includes(search) ||
+          normalizeText(item.numeroProposta).includes(search);
+        if (!matches) return false;
+      }
+      
+      return true;
+    });
+  }, [followUps, statusFilter, tempFilter, proposalFilter, integradorFilter, searchTerm]);
+
+  // Lógica de Filtragem de Prospecção
+  const filteredProspects = useMemo(() => {
+    return prospects.filter(item => {
+      if (prospectStatusFilter !== "all" && item.status !== prospectStatusFilter) return false;
+      
+      if (searchTerm) {
+        const search = normalizeText(searchTerm);
+        const matches = 
+          normalizeText(item.empresa).includes(search) ||
+          normalizeText(item.vendedor).includes(search) ||
+          normalizeText(item.contato).includes(search);
+        if (!matches) return false;
+      }
+      
+      return true;
+    });
+  }, [prospects, prospectStatusFilter, searchTerm]);
 
   const migrateToFollowUp = (prospect: Prospecting) => {
     const alreadyExists = followUps.some(f => f.prospectId === prospect.id);
@@ -97,36 +140,19 @@ const Index = () => {
     showSuccess(`Nova proposta gerada para ${prospect.empresa}!`);
   };
 
-  const handleAddFollowUp = (newFollowUp: FollowUp) => {
-    setFollowUps([
-      { ...newFollowUp, valor: Number(newFollowUp.valor) || 0 }, 
-      ...followUps
-    ]);
-  };
-
-  const handleUpdateFollowUp = (updated: FollowUp) => {
-    setFollowUps(followUps.map(item => item.id === updated.id ? {
-      ...updated,
-      valor: Number(updated.valor) || 0
-    } : item));
-  };
-
+  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
+  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
 
   const handleAddProspect = (newProspect: Prospecting) => {
     setProspects([newProspect, ...prospects]);
-    if (newProspect.status === 'Virou Proposta') {
-      migrateToFollowUp(newProspect);
-    }
+    if (newProspect.status === 'Virou Proposta') migrateToFollowUp(newProspect);
   };
 
   const handleUpdateProspect = (updated: Prospecting) => {
     const oldProspect = prospects.find(p => p.id === updated.id);
     setProspects(prospects.map(item => item.id === updated.id ? updated : item));
-    
-    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
-      migrateToFollowUp(updated);
-    }
+    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') migrateToFollowUp(updated);
   };
 
   const handleDeleteProspect = (id: string) => {
@@ -136,104 +162,21 @@ const Index = () => {
     }
   };
 
-  const handleClearAll = () => {
-    setFollowUps([]);
-    setProspects([]);
-    showSuccess("Todos os registros removidos.");
-  };
-
-  const handleClearByVendedor = () => {
-    if (!selectedVendedorToClear) return;
-    const vMatch = normalizeText(selectedVendedorToClear);
-    setFollowUps(followUps.filter(f => normalizeText(f.vendedor) !== vMatch));
-    setProspects(prospects.filter(p => normalizeText(p.vendedor) !== vMatch));
-    showSuccess(`Registros de ${selectedVendedorToClear} removidos.`);
-    setSelectedVendedorToClear("");
-  };
-
-  const handleImportData = (newFollowUps: FollowUp[], newProspects: Prospecting[]) => {
-    setFollowUps([...newFollowUps, ...followUps]);
-    setProspects([...newProspects, ...prospects]);
-    showSuccess("Dados importados com sucesso.");
-  };
-
-  const handleManualSave = () => {
-    localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
-    localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
-    setLastSaved(new Date().toLocaleTimeString());
-    showSuccess("Dados salvos!");
-  };
-
-  // Lógica de busca RESTRITIVA E EXCLUSIVA
-  const normalizedSearch = normalizeText(searchTerm);
-  const normalizedProposal = normalizeText(proposalFilter).replace('#', '');
-  const normalizedIntegrador = normalizeText(integradorFilter);
-
-  const filteredFollowUps = followUps.filter(item => {
-    // 1. Filtro de Status (Obrigatório se não for "all")
-    // Usamos comparação direta e rigorosa
-    if (statusFilter !== "all" && item.status !== statusFilter) {
-      return false;
-    }
-
-    // 2. Filtro de Temperatura (Obrigatório se não for "all")
-    if (tempFilter !== "all" && item.temperatura !== tempFilter) {
-      return false;
-    }
-
-    // 3. Filtro de Proposta (Exato se preenchido)
-    if (normalizedProposal !== "") {
-      const itemProposta = normalizeText(item.numeroProposta).replace('#', '');
-      if (itemProposta !== normalizedProposal) return false;
-    }
-
-    // 4. Filtro de Integrador (Contém se preenchido)
-    if (normalizedIntegrador !== "") {
-      const itemIntegrador = normalizeText(item.integrador);
-      if (!itemIntegrador.includes(normalizedIntegrador)) return false;
-    }
-
-    // 5. Busca Geral (Aplica-se aos campos restantes)
-    if (normalizedSearch !== "") {
-      const matchesSearch = 
-        normalizeText(item.integrador).includes(normalizedSearch) ||
-        normalizeText(item.obra).includes(normalizedSearch) ||
-        normalizeText(item.vendedor).includes(normalizedSearch) ||
-        normalizeText(item.numeroProposta).includes(normalizedSearch);
-      
-      if (!matchesSearch) return false;
-    }
-
-    return true;
-  });
-
-  const filteredProspects = prospects.filter(item => {
-    const matchesSearch = normalizedSearch === "" ||
-      normalizeText(item.empresa).includes(normalizedSearch) ||
-      normalizeText(item.vendedor).includes(normalizedSearch) ||
-      normalizeText(item.contato).includes(normalizedSearch);
-    
-    return matchesSearch;
-  });
-
-  const uniqueVendedores = Array.from(
-    new Set([
-      ...followUps.map(f => f.vendedor.trim()), 
-      ...prospects.map(v => v.vendedor.trim())
-    ])
-  ).sort((a, b) => a.localeCompare(b));
-
   const clearFilters = () => {
     setSearchTerm("");
     setProposalFilter("");
     setIntegradorFilter("");
     setTempFilter("all");
     setStatusFilter("all");
+    setProspectStatusFilter("all");
   };
+
+  const uniqueVendedores = Array.from(new Set([...followUps.map(f => f.vendedor), ...prospects.map(v => v.vendedor)])).sort();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
@@ -243,172 +186,113 @@ const Index = () => {
               <h1 className="text-2xl font-bold text-white tracking-tight">Gestão Comercial</h1>
               <div className="flex items-center gap-2 text-zinc-500 text-xs">
                 <span>Firesensor • Inteligência de Vendas</span>
-                {lastSaved && (
-                  <span className="flex items-center gap-1 text-emerald-500/70">
-                    <CheckCircle2 className="h-3 w-3" /> Salvo às {lastSaved}
-                  </span>
-                )}
+                {lastSaved && <span className="flex items-center gap-1 text-emerald-500/70"><CheckCircle2 className="h-3 w-3" /> Salvo às {lastSaved}</span>}
               </div>
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-              <Input 
-                placeholder="Busca rápida..." 
-                className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <FollowUpActions 
-              followUps={followUps} 
-              prospects={prospects} 
-              onImport={handleImportData} 
-            />
-
-            <Button onClick={handleManualSave} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300">
-              <Save className="mr-2 h-4 w-4" /> Salvar
-            </Button>
+            <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps([...f, ...followUps]); setProspects([...p, ...prospects]); }} />
+            <Button onClick={() => { localStorage.setItem("firesensor_followups", JSON.stringify(followUps)); showSuccess("Dados salvos!"); }} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
             
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400">
-                  <UserX className="mr-2 h-4 w-4" /> Limpar por Vendedor
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400"><Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo</Button></AlertDialogTrigger>
               <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir registros por vendedor</AlertDialogTitle>
-                  <AlertDialogDescription className="text-zinc-400">Selecione um vendedor para remover todos os seus registros.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="py-4">
-                  <Select onValueChange={setSelectedVendedorToClear} value={selectedVendedorToClear}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                      <SelectValue placeholder="Selecione o vendedor" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                      {uniqueVendedores.map(v => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-zinc-800 text-white">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearByVendedor} className="bg-red-600 text-white" disabled={!selectedVendedorToClear}>Excluir registros</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400">
-                  <Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Limpar todos os dados?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-zinc-400">Isso removerá prospecções e follow-ups permanentemente.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-zinc-800 text-white">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearAll} className="bg-red-600 text-white">Sim, excluir tudo</AlertDialogAction>
-                </AlertDialogFooter>
+                <AlertDialogHeader><AlertDialogTitle>Limpar todos os dados?</AlertDialogTitle><AlertDialogDescription className="text-zinc-400">Isso removerá prospecções e follow-ups permanentemente.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogFooter><AlertDialogCancel className="bg-zinc-800 text-white">Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => { setFollowUps([]); setProspects([]); }} className="bg-red-600 text-white">Sim, excluir tudo</AlertDialogAction></AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
         </div>
 
-        <Tabs defaultValue="prospecting" className="space-y-6">
+        {/* Barra de Filtros Global */}
+        <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2 text-zinc-400 mr-2">
+            <Filter className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">Filtros</span>
+          </div>
+
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Input placeholder="Busca rápida..." className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full h-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+
+          {activeTab === "followup" || activeTab === "dashboard" ? (
+            <>
+              <div className="relative w-40">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                <Input placeholder="Nº Proposta" className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-10 rounded-full" value={proposalFilter} onChange={(e) => setProposalFilter(e.target.value)} />
+              </div>
+              <div className="relative w-48">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                <Input placeholder="Integrador..." className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-10 rounded-full" value={integradorFilter} onChange={(e) => setIntegradorFilter(e.target.value)} />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] bg-zinc-900 border-zinc-800 text-xs h-10 rounded-full">
+                  <SelectValue placeholder="Status Follow-up" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectItem value="all">Todos Status</SelectItem>
+                  <SelectItem value="Ganha">✅ Ganha</SelectItem>
+                  <SelectItem value="Em Andamento">⏳ Em Andamento</SelectItem>
+                  <SelectItem value="Perdida">❌ Perdida</SelectItem>
+                  <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={tempFilter} onValueChange={setTempFilter}>
+                <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-10 rounded-full">
+                  <SelectValue placeholder="Temperatura" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectItem value="all">Todas Temps</SelectItem>
+                  <SelectItem value="Quente">🔥 Quente</SelectItem>
+                  <SelectItem value="Morna">⚖️ Morna</SelectItem>
+                  <SelectItem value="Fria">❄️ Fria</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          ) : (
+            <Select value={prospectStatusFilter} onValueChange={setProspectStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800 text-xs h-10 rounded-full">
+                <SelectValue placeholder="Status Prospecção" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="Novo Lead">Novo Lead</SelectItem>
+                <SelectItem value="Em Contato">Em Contato</SelectItem>
+                <SelectItem value="Qualificado">Qualificado</SelectItem>
+                <SelectItem value="Desqualificado">Desqualificado</SelectItem>
+                <SelectItem value="Virou Proposta">Virou Proposta</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {(searchTerm || proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all" || prospectStatusFilter !== "all") && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
+              <X className="h-4 w-4 mr-1" /> Limpar Filtros
+            </Button>
+          )}
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
             <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
-              <TabsTrigger value="prospecting" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                <Target className="mr-2 h-4 w-4" /> Prospecção
-              </TabsTrigger>
-              <TabsTrigger value="followup" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-                <List className="mr-2 h-4 w-4" /> Follow-up
-              </TabsTrigger>
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white">
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboards
-              </TabsTrigger>
+              <TabsTrigger value="prospecting" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"><Target className="mr-2 h-4 w-4" /> Prospecção</TabsTrigger>
+              <TabsTrigger value="followup" className="data-[state=active]:bg-red-600 data-[state=active]:text-white"><List className="mr-2 h-4 w-4" /> Follow-up</TabsTrigger>
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-zinc-700 data-[state=active]:text-white"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboards</TabsTrigger>
             </TabsList>
             
             <div className="flex items-center gap-2">
-              <TabsContent value="prospecting" className="m-0">
-                <ProspectingForm onSave={handleAddProspect} />
-              </TabsContent>
-              <TabsContent value="followup" className="m-0">
-                <div className="flex flex-wrap gap-2">
-                  <div className="relative w-40">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
-                    <Input 
-                      placeholder="Nº Proposta" 
-                      className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full"
-                      value={proposalFilter}
-                      onChange={(e) => setProposalFilter(e.target.value)}
-                    />
-                  </div>
-                  <div className="relative w-48">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
-                    <Input 
-                      placeholder="Filtrar Integrador..." 
-                      className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full"
-                      value={integradorFilter}
-                      onChange={(e) => setIntegradorFilter(e.target.value)}
-                    />
-                  </div>
-                  <Select value={tempFilter} onValueChange={setTempFilter}>
-                    <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full">
-                      <SelectValue placeholder="Temperatura" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                      <SelectItem value="all">Todas Temps</SelectItem>
-                      <SelectItem value="Quente">🔥 Quente</SelectItem>
-                      <SelectItem value="Morna">⚖️ Morna</SelectItem>
-                      <SelectItem value="Fria">❄️ Fria</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                      <SelectItem value="all">Todos Status</SelectItem>
-                      <SelectItem value="Ganha">✅ Ganha</SelectItem>
-                      <SelectItem value="Em Andamento">⏳ Em Andamento</SelectItem>
-                      <SelectItem value="Perdida">❌ Perdida</SelectItem>
-                      <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {(proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all") && (
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-9">
-                      <X className="h-4 w-4 mr-1" /> Limpar
-                    </Button>
-                  )}
-                  <FollowUpForm onSave={handleAddFollowUp} />
-                </div>
-              </TabsContent>
+              {activeTab === "prospecting" && <ProspectingForm onSave={handleAddProspect} />}
+              {activeTab === "followup" && <FollowUpForm onSave={handleAddFollowUp} />}
             </div>
           </div>
 
           <TabsContent value="prospecting" className="outline-none space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                <p className="text-zinc-500 text-xs uppercase font-bold">Total de Leads</p>
-                <p className="text-2xl font-bold text-white">{prospects.length}</p>
-              </div>
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                <p className="text-zinc-500 text-xs uppercase font-bold">Qualificados</p>
-                <p className="text-2xl font-bold text-emerald-500">{prospects.filter(p => p.status === 'Qualificado').length}</p>
-              </div>
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                <p className="text-zinc-500 text-xs uppercase font-bold">Conversão (Proposta)</p>
-                <p className="text-2xl font-bold text-purple-500">{prospects.filter(p => p.status === 'Virou Proposta').length}</p>
-              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Total de Leads</p><p className="text-2xl font-bold text-white">{filteredProspects.length}</p></div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Qualificados</p><p className="text-2xl font-bold text-emerald-500">{filteredProspects.filter(p => p.status === 'Qualificado').length}</p></div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Conversão</p><p className="text-2xl font-bold text-purple-500">{filteredProspects.filter(p => p.status === 'Virou Proposta').length}</p></div>
             </div>
             <ProspectingTable data={filteredProspects} onDelete={handleDeleteProspect} onUpdate={handleUpdateProspect} />
           </TabsContent>
@@ -420,16 +304,11 @@ const Index = () => {
 
           <TabsContent value="dashboard" className="outline-none space-y-8">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-emerald-500 font-bold text-lg border-b border-zinc-800 pb-2">
-                <Target className="h-5 w-5" /> Dashboard de Prospecção
-              </div>
-              <ProspectingDashboard data={prospects} />
+              <div className="flex items-center gap-2 text-emerald-500 font-bold text-lg border-b border-zinc-800 pb-2"><Target className="h-5 w-5" /> Dashboard de Prospecção</div>
+              <ProspectingDashboard data={filteredProspects} />
             </div>
-            
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-red-500 font-bold text-lg border-b border-zinc-800 pb-2">
-                <BarChart3 className="h-5 w-5" /> Dashboard de Follow-up
-              </div>
+              <div className="flex items-center gap-2 text-red-500 font-bold text-lg border-b border-zinc-800 pb-2"><BarChart3 className="h-5 w-5" /> Dashboard de Follow-up</div>
               <FollowUpDashboard data={filteredFollowUps} />
             </div>
           </TabsContent>
