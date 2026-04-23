@@ -55,7 +55,6 @@ const Index = () => {
   const [prospectStatusFilter, setProspectStatusFilter] = useState<string>("all");
   
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [selectedVendedorToClear, setSelectedVendedorToClear] = useState<string>("");
 
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
@@ -63,20 +62,34 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Lógica de Filtragem de Follow-up (Rigorosa)
+  // Lógica de Filtragem de Follow-up (ESTRITA E NORMALIZADA)
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // 1. Filtro de Status (Prioridade Absoluta)
-      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      // 1. Filtro de Status (Comparação Normalizada)
+      if (statusFilter !== "all") {
+        const itemStatus = normalizeText(item.status);
+        const filterStatus = normalizeText(statusFilter);
+        if (itemStatus !== filterStatus) return false;
+      }
       
       // 2. Filtro de Temperatura
-      if (tempFilter !== "all" && item.temperatura !== tempFilter) return false;
+      if (tempFilter !== "all") {
+        const itemTemp = normalizeText(item.temperatura);
+        const filterTemp = normalizeText(tempFilter);
+        if (itemTemp !== filterTemp) return false;
+      }
       
       // 3. Filtro de Proposta
-      if (proposalFilter && !normalizeText(item.numeroProposta).includes(normalizeText(proposalFilter))) return false;
+      if (proposalFilter) {
+        const searchProp = normalizeText(proposalFilter).replace('#', '');
+        const itemProp = normalizeText(item.numeroProposta).replace('#', '');
+        if (!itemProp.includes(searchProp)) return false;
+      }
       
       // 4. Filtro de Integrador
-      if (integradorFilter && !normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
+      if (integradorFilter) {
+        if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
+      }
       
       // 5. Busca Geral
       if (searchTerm) {
@@ -85,7 +98,8 @@ const Index = () => {
           normalizeText(item.integrador).includes(search) ||
           normalizeText(item.obra).includes(search) ||
           normalizeText(item.vendedor).includes(search) ||
-          normalizeText(item.numeroProposta).includes(search);
+          normalizeText(item.numeroProposta).includes(search) ||
+          normalizeText(item.cidade || "").includes(search);
         if (!matches) return false;
       }
       
@@ -96,7 +110,9 @@ const Index = () => {
   // Lógica de Filtragem de Prospecção
   const filteredProspects = useMemo(() => {
     return prospects.filter(item => {
-      if (prospectStatusFilter !== "all" && item.status !== prospectStatusFilter) return false;
+      if (prospectStatusFilter !== "all") {
+        if (normalizeText(item.status) !== normalizeText(prospectStatusFilter)) return false;
+      }
       
       if (searchTerm) {
         const search = normalizeText(searchTerm);
@@ -170,8 +186,6 @@ const Index = () => {
     setStatusFilter("all");
     setProspectStatusFilter("all");
   };
-
-  const uniqueVendedores = Array.from(new Set([...followUps.map(f => f.vendedor), ...prospects.map(v => v.vendedor)])).sort();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
