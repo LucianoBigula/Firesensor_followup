@@ -37,18 +37,12 @@ import {
 const Index = () => {
   const [activeTab, setActiveTab] = useState("followup");
   
-  // 1. ESTADO DOS DADOS COM NORMALIZAÇÃO NO CARREGAMENTO
+  // 1. ESTADO DOS DADOS (PURO, SEM PADRONIZAÇÃO NA FONTE)
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
     try {
-      const parsed = JSON.parse(saved);
-      // Garante que os dados carregados estejam limpos
-      return parsed.map((item: any) => ({
-        ...item,
-        status: String(item.status || "").trim(),
-        temperatura: String(item.temperatura || "").trim()
-      }));
+      return JSON.parse(saved);
     } catch (e) { return []; }
   });
 
@@ -56,11 +50,7 @@ const Index = () => {
     const saved = localStorage.getItem("firesensor_prospecting");
     if (!saved) return [];
     try {
-      const parsed = JSON.parse(saved);
-      return parsed.map((item: any) => ({
-        ...item,
-        status: String(item.status || "").trim()
-      }));
+      return JSON.parse(saved);
     } catch (e) { return []; }
   });
   
@@ -80,34 +70,36 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // 4. LÓGICA DE FILTRAGEM ABSOLUTA (ESTEIRA DE EXCLUSÃO)
+  // 4. LÓGICA DE FILTRAGEM VIA CONDICIONAIS (IF)
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // REGRA 1: STATUS (Se selecionado, a exclusão é imediata e absoluta)
+      // Lógica IF para Status
       if (statusFilter !== "all") {
-        const itemStatus = String(item.status || "").trim();
-        if (itemStatus !== statusFilter) return false;
+        const itemStatus = (item.status || "").toString().trim().toLowerCase();
+        const filterStatus = statusFilter.toLowerCase();
+        if (itemStatus !== filterStatus) return false;
       }
 
-      // REGRA 2: TEMPERATURA
+      // Lógica IF para Temperatura
       if (tempFilter !== "all") {
-        const itemTemp = String(item.temperatura || "").trim();
-        if (itemTemp !== tempFilter) return false;
+        const itemTemp = (item.temperatura || "").toString().trim().toLowerCase();
+        const filterTemp = tempFilter.toLowerCase();
+        if (itemTemp !== filterTemp) return false;
       }
 
-      // REGRA 3: NÚMERO DA PROPOSTA
+      // Lógica IF para Número da Proposta
       if (proposalFilter) {
         const cleanItemProp = normalizeText(item.numeroProposta).replace('#', '');
         const cleanSearchProp = normalizeText(proposalFilter).replace('#', '');
         if (!cleanItemProp.includes(cleanSearchProp)) return false;
       }
 
-      // REGRA 4: INTEGRADOR
+      // Lógica IF para Integrador
       if (integradorFilter) {
         if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
       }
 
-      // REGRA 5: BUSCA GLOBAL
+      // Lógica IF para Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matchesGlobal = 
@@ -125,9 +117,14 @@ const Index = () => {
 
   const filteredProspects = useMemo(() => {
     return prospects.filter(item => {
+      // Lógica IF para Status de Prospecção
       if (prospectStatusFilter !== "all") {
-        if (String(item.status).trim() !== prospectStatusFilter) return false;
+        const itemStatus = (item.status || "").toString().trim().toLowerCase();
+        const filterStatus = prospectStatusFilter.toLowerCase();
+        if (itemStatus !== filterStatus) return false;
       }
+
+      // Lógica IF para Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         return normalizeText(item.empresa).includes(search) ||
@@ -245,11 +242,9 @@ const Index = () => {
               </SelectContent>
             </Select>
           )}
-          {(searchTerm || proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all" || prospectStatusFilter !== "all") && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
-              <X className="h-4 w-4 mr-1" /> Limpar Filtros
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
         </div>
 
         {/* Conteúdo Principal */}
