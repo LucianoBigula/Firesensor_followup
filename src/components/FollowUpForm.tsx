@@ -49,11 +49,18 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Garantir que o valor seja um número válido para não quebrar os gráficos
+    const valorNumerico = Number(formData.valor);
+    if (isNaN(valorNumerico)) {
+      showError("Valor inválido.");
+      return;
+    }
+
     const followUpToSave: FollowUp = {
       ...DEFAULT_FORM_STATE,
       ...formData,
       id: initialData?.id || Math.random().toString(36).substr(2, 9),
-      valor: Number(formData.valor) || 0,
+      valor: valorNumerico,
       dataAtualizacao: formData.dataAtualizacao || new Date().toISOString().split('T')[0]
     } as FollowUp;
     
@@ -97,7 +104,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Valor (R$)</Label>
-            <Input type="number" step="0.01" required value={formData.valor ?? ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, valor: e.target.value === "" ? undefined : Number(e.target.value)}))} />
+            <Input type="number" step="0.01" required value={formData.valor ?? ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, valor: e.target.value === "" ? 0 : Number(e.target.value)}))} />
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Integrador</Label>
@@ -134,7 +141,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input type="email" value={formData.email || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
           </div>
 
-          {/* Seção: Ações e Status (Reorganizada) */}
+          {/* Seção: Ações e Status */}
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
             <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Ações e Status</h3>
           </div>

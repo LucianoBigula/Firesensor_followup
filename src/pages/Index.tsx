@@ -9,11 +9,12 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash, Building2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { showSuccess, showError } from "@/utils/toast";
+import { normalizeText } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,16 +38,25 @@ const Index = () => {
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
-    return JSON.parse(saved);
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      return [];
+    }
   });
 
   const [prospects, setProspects] = useState<Prospecting[]>(() => {
     const saved = localStorage.getItem("firesensor_prospecting");
-    return saved ? JSON.parse(saved) : [];
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   });
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [proposalFilter, setProposalFilter] = useState(""); // Novo estado para filtro exato
+  const [proposalFilter, setProposalFilter] = useState("");
+  const [integradorFilter, setIntegradorFilter] = useState(""); // Novo filtro avançado
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -89,36 +99,33 @@ const Index = () => {
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => {
     setFollowUps([
-      { ...newFollowUp, vendedor: newFollowUp.vendedor.trim(), integrador: newFollowUp.integrador.trim() }, 
+      { ...newFollowUp, valor: Number(newFollowUp.valor) || 0 }, 
       ...followUps
     ]);
   };
 
   const handleUpdateFollowUp = (updated: FollowUp) => {
     setFollowUps(followUps.map(item => item.id === updated.id ? {
-      ...updated, 
-      vendedor: updated.vendedor.trim(), 
-      integrador: updated.integrador.trim()
+      ...updated,
+      valor: Number(updated.valor) || 0
     } : item));
   };
 
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
 
   const handleAddProspect = (newProspect: Prospecting) => {
-    const cleanedProspect = { ...newProspect, vendedor: newProspect.vendedor.trim(), empresa: newProspect.empresa.trim() };
-    setProspects([cleanedProspect, ...prospects]);
-    if (cleanedProspect.status === 'Virou Proposta') {
-      migrateToFollowUp(cleanedProspect);
+    setProspects([newProspect, ...prospects]);
+    if (newProspect.status === 'Virou Proposta') {
+      migrateToFollowUp(newProspect);
     }
   };
 
   const handleUpdateProspect = (updated: Prospecting) => {
-    const cleanedUpdated = { ...updated, vendedor: updated.vendedor.trim(), empresa: updated.empresa.trim() };
     const oldProspect = prospects.find(p => p.id === updated.id);
-    setProspects(prospects.map(item => item.id === updated.id ? cleanedUpdated : item));
+    setProspects(prospects.map(item => item.id === updated.id ? updated : item));
     
-    if (cleanedUpdated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
-      migrateToFollowUp(cleanedUpdated);
+    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') {
+      migrateToFollowUp(updated);
     }
   };
 
@@ -137,9 +144,9 @@ const Index = () => {
 
   const handleClearByVendedor = () => {
     if (!selectedVendedorToClear) return;
-    const vendedorToMatch = selectedVendedorToClear.toLowerCase().trim();
-    setFollowUps(followUps.filter(f => f.vendedor.toLowerCase().trim() !== vendedorToMatch));
-    setProspects(prospects.filter(p => p.vendedor.toLowerCase().trim() !== vendedorToMatch));
+    const vMatch = normalizeText(selectedVendedorToClear);
+    setFollowUps(followUps.filter(f => normalizeText(f.vendedor) !== vMatch));
+    setProspects(prospects.filter(p => normalizeText(p.vendedor) !== vMatch));
     showSuccess(`Registros de ${selectedVendedorToClear} removidos.`);
     setSelectedVendedorToClear("");
   };
@@ -157,44 +164,44 @@ const Index = () => {
     showSuccess("Dados salvos!");
   };
 
-  // Lógica de busca aprimorada
-  const normalizedSearch = searchTerm.toLowerCase().trim();
-  const normalizedProposalFilter = proposalFilter.toLowerCase().trim().replace('#', '');
+  // Lógica de busca avançada
+  const normalizedSearch = normalizeText(searchTerm);
+  const normalizedProposal = normalizeText(proposalFilter).replace('#', '');
+  const normalizedIntegrador = normalizeText(integradorFilter);
 
   const filteredFollowUps = followUps.filter(item => {
-    // Filtro por Número de Proposta (Exato)
-    if (normalizedProposalFilter !== "") {
-      const itemProposal = item.numeroProposta.toLowerCase().trim().replace('#', '');
-      return itemProposal === normalizedProposalFilter;
+    // Filtro por Número de Proposta (Exato se preenchido)
+    if (normalizedProposal !== "") {
+      const itemProposal = normalizeText(item.numeroProposta).replace('#', '');
+      if (itemProposal !== normalizedProposal) return false;
     }
 
-    // Filtro Geral (se o filtro de proposta estiver vazio)
-    const integrador = item.integrador.toLowerCase();
-    const obra = item.obra.toLowerCase();
-    const numeroProposta = item.numeroProposta.toLowerCase();
-    const vendedor = item.vendedor.toLowerCase();
-    const responsavel = (item.responsavel || "").toLowerCase();
+    // Filtro Avançado por Integrador (se preenchido)
+    if (normalizedIntegrador !== "") {
+      const itemIntegrador = normalizeText(item.integrador);
+      if (!itemIntegrador.includes(normalizedIntegrador)) return false;
+    }
 
-    const matchesSearch = 
-      integrador.includes(normalizedSearch) ||
-      obra.includes(normalizedSearch) ||
-      vendedor.includes(normalizedSearch) ||
-      responsavel.includes(normalizedSearch) ||
-      numeroProposta.includes(normalizedSearch);
+    // Filtro Geral (Busca em múltiplos campos)
+    const matchesSearch = normalizedSearch === "" || 
+      normalizeText(item.integrador).includes(normalizedSearch) ||
+      normalizeText(item.obra).includes(normalizedSearch) ||
+      normalizeText(item.vendedor).includes(normalizedSearch) ||
+      normalizeText(item.numeroProposta).includes(normalizedSearch);
     
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    
     return matchesSearch && matchesTemp && matchesStatus;
   });
 
   const filteredProspects = prospects.filter(item => {
-    const empresa = item.empresa.toLowerCase();
-    const vendedor = item.vendedor.toLowerCase();
-    const contato = item.contato.toLowerCase();
-
-    return empresa.includes(normalizedSearch) ||
-           vendedor.includes(normalizedSearch) ||
-           contato.includes(normalizedSearch);
+    const matchesSearch = normalizedSearch === "" ||
+      normalizeText(item.empresa).includes(normalizedSearch) ||
+      normalizeText(item.vendedor).includes(normalizedSearch) ||
+      normalizeText(item.contato).includes(normalizedSearch);
+    
+    return matchesSearch;
   });
 
   const uniqueVendedores = Array.from(
@@ -203,6 +210,14 @@ const Index = () => {
       ...prospects.map(v => v.vendedor.trim())
     ])
   ).sort((a, b) => a.localeCompare(b));
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setProposalFilter("");
+    setIntegradorFilter("");
+    setTempFilter("all");
+    setStatusFilter("all");
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
@@ -229,7 +244,7 @@ const Index = () => {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
-                placeholder="Busca geral (Integrador, Obra...)" 
+                placeholder="Busca rápida..." 
                 className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -325,6 +340,15 @@ const Index = () => {
                       onChange={(e) => setProposalFilter(e.target.value)}
                     />
                   </div>
+                  <div className="relative w-48">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                    <Input 
+                      placeholder="Filtrar Integrador..." 
+                      className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full"
+                      value={integradorFilter}
+                      onChange={(e) => setIntegradorFilter(e.target.value)}
+                    />
+                  </div>
                   <Select value={tempFilter} onValueChange={setTempFilter}>
                     <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full">
                       <SelectValue placeholder="Temperatura" />
@@ -348,6 +372,11 @@ const Index = () => {
                       <SelectItem value="Cancelada">🚫 Cancelada</SelectItem>
                     </SelectContent>
                   </Select>
+                  {(proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all") && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-9">
+                      <X className="h-4 w-4 mr-1" /> Limpar
+                    </Button>
+                  )}
                   <FollowUpForm onSave={handleAddFollowUp} />
                 </div>
               </TabsContent>
