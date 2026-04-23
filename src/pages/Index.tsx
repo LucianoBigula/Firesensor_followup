@@ -37,16 +37,12 @@ import {
 const Index = () => {
   const [activeTab, setActiveTab] = useState("followup");
   
+  // 1. ESTADO DOS DADOS
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
     try {
-      const data = JSON.parse(saved);
-      return data.map((item: any) => ({
-        ...item,
-        status: String(item.status || "").trim(),
-        temperatura: String(item.temperatura || "").trim()
-      }));
+      return JSON.parse(saved);
     } catch (e) { return []; }
   });
 
@@ -54,14 +50,11 @@ const Index = () => {
     const saved = localStorage.getItem("firesensor_prospecting");
     if (!saved) return [];
     try {
-      const data = JSON.parse(saved);
-      return data.map((item: any) => ({
-        ...item,
-        status: String(item.status || "").trim()
-      }));
+      return JSON.parse(saved);
     } catch (e) { return []; }
   });
   
+  // 2. ESTADO DOS FILTROS
   const [searchTerm, setSearchTerm] = useState("");
   const [proposalFilter, setProposalFilter] = useState("");
   const [integradorFilter, setIntegradorFilter] = useState(""); 
@@ -70,126 +63,80 @@ const Index = () => {
   const [prospectStatusFilter, setProspectStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
+  // 3. PERSISTÊNCIA
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
     localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // Lógica de Filtragem (SEQUENCIAL E INFALÍVEL)
+  // 4. FLUXO DE FILTRAGEM REFEITO DO ZERO (ESTEIRA LINEAR)
   const filteredFollowUps = useMemo(() => {
-    // Começamos com todos os dados
-    let result = [...followUps];
+    return followUps.filter(item => {
+      // PORTÃO 1: STATUS (Prioridade Máxima)
+      if (statusFilter !== "all") {
+        if (item.status !== statusFilter) return false;
+      }
 
-    // 1. Filtro de Status (Obrigatório e Excludente)
-    // Se o filtro não for "all", removemos TUDO que não for o status selecionado
-    if (statusFilter !== "all") {
-      result = result.filter(item => {
-        const itemStatus = String(item.status || "").trim();
-        return itemStatus === statusFilter;
-      });
-    }
+      // PORTÃO 2: TEMPERATURA
+      if (tempFilter !== "all") {
+        if (item.temperatura !== tempFilter) return false;
+      }
 
-    // 2. Filtro de Temperatura
-    if (tempFilter !== "all") {
-      result = result.filter(item => {
-        const itemTemp = String(item.temperatura || "").trim();
-        return itemTemp === tempFilter;
-      });
-    }
+      // PORTÃO 3: NÚMERO DA PROPOSTA
+      if (proposalFilter) {
+        const cleanItemProp = normalizeText(item.numeroProposta).replace('#', '');
+        const cleanSearchProp = normalizeText(proposalFilter).replace('#', '');
+        if (!cleanItemProp.includes(cleanSearchProp)) return false;
+      }
 
-    // 3. Filtro de Proposta
-    if (proposalFilter) {
-      const search = normalizeText(proposalFilter).replace('#', '');
-      result = result.filter(item => 
-        normalizeText(item.numeroProposta).replace('#', '').includes(search)
-      );
-    }
+      // PORTÃO 4: INTEGRADOR
+      if (integradorFilter) {
+        if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
+      }
 
-    // 4. Filtro de Integrador
-    if (integradorFilter) {
-      const search = normalizeText(integradorFilter);
-      result = result.filter(item => 
-        normalizeText(item.integrador).includes(search)
-      );
-    }
+      // PORTÃO 5: BUSCA GLOBAL (Vendedor, Obra, Cidade)
+      if (searchTerm) {
+        const search = normalizeText(searchTerm);
+        const matchesGlobal = 
+          normalizeText(item.vendedor).includes(search) ||
+          normalizeText(item.obra).includes(search) ||
+          normalizeText(item.cidade || "").includes(search) ||
+          normalizeText(item.integrador).includes(search);
+        
+        if (!matchesGlobal) return false;
+      }
 
-    // 5. Busca Geral
-    if (searchTerm) {
-      const search = normalizeText(searchTerm);
-      result = result.filter(item => 
-        normalizeText(item.integrador).includes(search) ||
-        normalizeText(item.obra).includes(search) ||
-        normalizeText(item.vendedor).includes(search) ||
-        normalizeText(item.numeroProposta).includes(search) ||
-        normalizeText(item.cidade || "").includes(search)
-      );
-    }
-
-    return result;
+      // Se passou por todos os portões, o registro é exibido
+      return true;
+    });
   }, [followUps, statusFilter, tempFilter, proposalFilter, integradorFilter, searchTerm]);
 
+  // Filtragem de Prospecção (Mesma lógica linear)
   const filteredProspects = useMemo(() => {
-    let result = [...prospects];
-    if (prospectStatusFilter !== "all") {
-      result = result.filter(item => String(item.status).trim() === prospectStatusFilter);
-    }
-    if (searchTerm) {
-      const search = normalizeText(searchTerm);
-      result = result.filter(item => 
-        normalizeText(item.empresa).includes(search) ||
-        normalizeText(item.vendedor).includes(search) ||
-        normalizeText(item.contato).includes(search)
-      );
-    }
-    return result;
+    return prospects.filter(item => {
+      if (prospectStatusFilter !== "all") {
+        if (item.status !== prospectStatusFilter) return false;
+      }
+      if (searchTerm) {
+        const search = normalizeText(searchTerm);
+        return normalizeText(item.empresa).includes(search) ||
+               normalizeText(item.vendedor).includes(search) ||
+               normalizeText(item.contato).includes(search);
+      }
+      return true;
+    });
   }, [prospects, prospectStatusFilter, searchTerm]);
 
-  const migrateToFollowUp = (prospect: Prospecting) => {
-    const alreadyExists = followUps.some(f => f.prospectId === prospect.id);
-    if (alreadyExists) return;
-    const newFollowUp: FollowUp = {
-      id: Math.random().toString(36).substr(2, 9),
-      prospectId: prospect.id,
-      vendedor: prospect.vendedor.trim(),
-      integrador: prospect.empresa.trim(),
-      responsavel: prospect.contato.trim(),
-      telefone: prospect.telefone,
-      email: prospect.email,
-      dataAtualizacao: new Date().toISOString().split('T')[0],
-      numeroProposta: "PENDENTE",
-      obra: "A DEFINIR",
-      valor: 0,
-      temperatura: 'Morna',
-      status: 'Em Andamento',
-      expectativa: '30 dias',
-      diaSemana: 'Segunda',
-      semanaMes: 'Semana 1',
-      comentarioAcao: `Migrado da prospecção em ${new Date().toLocaleDateString()}`,
-      acaoFutura: "Definir número da proposta e obra"
-    };
-    setFollowUps(prev => [newFollowUp, ...prev]);
-    showSuccess(`Nova proposta gerada para ${prospect.empresa}!`);
-  };
-
+  // 5. AÇÕES
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
   const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
-  const handleAddProspect = (newProspect: Prospecting) => {
-    setProspects([newProspect, ...prospects]);
-    if (newProspect.status === 'Virou Proposta') migrateToFollowUp(newProspect);
-  };
-  const handleUpdateProspect = (updated: Prospecting) => {
-    const oldProspect = prospects.find(p => p.id === updated.id);
-    setProspects(prospects.map(item => item.id === updated.id ? updated : item));
-    if (updated.status === 'Virou Proposta' && oldProspect?.status !== 'Virou Proposta') migrateToFollowUp(updated);
-  };
-  const handleDeleteProspect = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta prospecção?")) {
-      setProspects(prospects.filter(item => item.id !== id));
-      showSuccess("Prospecção removida.");
-    }
-  };
+  
+  const handleAddProspect = (newProspect: Prospecting) => setProspects([newProspect, ...prospects]);
+  const handleUpdateProspect = (updated: Prospecting) => setProspects(prospects.map(item => item.id === updated.id ? updated : item));
+  const handleDeleteProspect = (id: string) => setProspects(prospects.filter(item => item.id !== id));
+
   const clearFilters = () => {
     setSearchTerm("");
     setProposalFilter("");
@@ -202,6 +149,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white p-1.5 rounded-xl shadow-lg shadow-red-900/10">
@@ -228,6 +176,7 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Barra de Filtros */}
         <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 text-zinc-400 mr-2">
             <Filter className="h-4 w-4" />
@@ -286,13 +235,12 @@ const Index = () => {
               </SelectContent>
             </Select>
           )}
-          {(searchTerm || proposalFilter || integradorFilter || tempFilter !== "all" || statusFilter !== "all" || prospectStatusFilter !== "all") && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
-              <X className="h-4 w-4 mr-1" /> Limpar Filtros
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-zinc-500 hover:text-white h-10">
+            <X className="h-4 w-4 mr-1" /> Limpar
+          </Button>
         </div>
 
+        {/* Conteúdo Principal */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex items-center justify-between">
             <TabsList className="bg-zinc-900 border border-zinc-800 p-1">
@@ -305,18 +253,16 @@ const Index = () => {
               {activeTab === "followup" && <FollowUpForm onSave={handleAddFollowUp} />}
             </div>
           </div>
+
           <TabsContent value="prospecting" className="outline-none space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Total de Leads</p><p className="text-2xl font-bold text-white">{filteredProspects.length}</p></div>
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Qualificados</p><p className="text-2xl font-bold text-emerald-500">{filteredProspects.filter(p => p.status === 'Qualificado').length}</p></div>
-              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800"><p className="text-zinc-500 text-xs uppercase font-bold">Conversão</p><p className="text-2xl font-bold text-purple-500">{filteredProspects.filter(p => p.status === 'Virou Proposta').length}</p></div>
-            </div>
             <ProspectingTable data={filteredProspects} onDelete={handleDeleteProspect} onUpdate={handleUpdateProspect} />
           </TabsContent>
+
           <TabsContent value="followup" className="space-y-6 outline-none">
             <FollowUpStats data={filteredFollowUps} />
             <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
           </TabsContent>
+
           <TabsContent value="dashboard" className="outline-none space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-emerald-500 font-bold text-lg border-b border-zinc-800 pb-2"><Target className="h-5 w-5" /> Dashboard de Prospecção</div>
