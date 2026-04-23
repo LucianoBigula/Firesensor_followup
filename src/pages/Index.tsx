@@ -171,6 +171,7 @@ const Index = () => {
 
   const filteredFollowUps = followUps.filter(item => {
     // 1. Filtro de Status (Obrigatório se não for "all")
+    // Usamos comparação direta e rigorosa
     if (statusFilter !== "all" && item.status !== statusFilter) {
       return false;
     }
