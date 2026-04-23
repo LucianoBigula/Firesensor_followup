@@ -164,43 +164,46 @@ const Index = () => {
     showSuccess("Dados salvos!");
   };
 
-  // Lógica de busca EXCLUSIVA e RESTRITIVA
+  // Lógica de busca RESTRITIVA E EXCLUSIVA
   const normalizedSearch = normalizeText(searchTerm);
   const normalizedProposal = normalizeText(proposalFilter).replace('#', '');
   const normalizedIntegrador = normalizeText(integradorFilter);
 
   const filteredFollowUps = followUps.filter(item => {
-    const itemIntegrador = normalizeText(item.integrador);
-    const itemObra = normalizeText(item.obra);
-    const itemVendedor = normalizeText(item.vendedor);
-    const itemProposta = normalizeText(item.numeroProposta).replace('#', '');
-
-    // 1. Filtro de Proposta (Se preenchido, deve ser exato)
-    if (normalizedProposal !== "" && itemProposta !== normalizedProposal) {
+    // 1. Filtro de Status (Obrigatório se não for "all")
+    if (statusFilter !== "all" && item.status !== statusFilter) {
       return false;
     }
 
-    // 2. Filtro de Integrador (Se preenchido, deve conter o termo)
-    if (normalizedIntegrador !== "" && !itemIntegrador.includes(normalizedIntegrador)) {
+    // 2. Filtro de Temperatura (Obrigatório se não for "all")
+    if (tempFilter !== "all" && item.temperatura !== tempFilter) {
       return false;
     }
 
-    // 3. Busca Geral (Só aplica se os filtros específicos acima permitirem)
+    // 3. Filtro de Proposta (Exato se preenchido)
+    if (normalizedProposal !== "") {
+      const itemProposta = normalizeText(item.numeroProposta).replace('#', '');
+      if (itemProposta !== normalizedProposal) return false;
+    }
+
+    // 4. Filtro de Integrador (Contém se preenchido)
+    if (normalizedIntegrador !== "") {
+      const itemIntegrador = normalizeText(item.integrador);
+      if (!itemIntegrador.includes(normalizedIntegrador)) return false;
+    }
+
+    // 5. Busca Geral (Aplica-se aos campos restantes)
     if (normalizedSearch !== "") {
       const matchesSearch = 
-        itemIntegrador.includes(normalizedSearch) ||
-        itemObra.includes(normalizedSearch) ||
-        itemVendedor.includes(normalizedSearch) ||
-        itemProposta.includes(normalizedSearch);
+        normalizeText(item.integrador).includes(normalizedSearch) ||
+        normalizeText(item.obra).includes(normalizedSearch) ||
+        normalizeText(item.vendedor).includes(normalizedSearch) ||
+        normalizeText(item.numeroProposta).includes(normalizedSearch);
       
       if (!matchesSearch) return false;
     }
 
-    // 4. Filtros de Categoria (Selects)
-    const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    
-    return matchesTemp && matchesStatus;
+    return true;
   });
 
   const filteredProspects = prospects.filter(item => {
