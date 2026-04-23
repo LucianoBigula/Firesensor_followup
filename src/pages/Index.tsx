@@ -9,7 +9,7 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3 } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, UserX, Target, BarChart3, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ const Index = () => {
   });
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [proposalFilter, setProposalFilter] = useState(""); // Novo estado para filtro exato
   const [tempFilter, setTempFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -158,10 +159,16 @@ const Index = () => {
 
   // Lógica de busca aprimorada
   const normalizedSearch = searchTerm.toLowerCase().trim();
-  // Remove o '#' se o usuário digitar para facilitar a busca por número
-  const searchWithoutHash = normalizedSearch.replace('#', '');
+  const normalizedProposalFilter = proposalFilter.toLowerCase().trim().replace('#', '');
 
   const filteredFollowUps = followUps.filter(item => {
+    // Filtro por Número de Proposta (Exato)
+    if (normalizedProposalFilter !== "") {
+      const itemProposal = item.numeroProposta.toLowerCase().trim().replace('#', '');
+      return itemProposal === normalizedProposalFilter;
+    }
+
+    // Filtro Geral (se o filtro de proposta estiver vazio)
     const integrador = item.integrador.toLowerCase();
     const obra = item.obra.toLowerCase();
     const numeroProposta = item.numeroProposta.toLowerCase();
@@ -173,9 +180,7 @@ const Index = () => {
       obra.includes(normalizedSearch) ||
       vendedor.includes(normalizedSearch) ||
       responsavel.includes(normalizedSearch) ||
-      // Busca inteligente por número de proposta (com ou sem #)
-      numeroProposta.includes(normalizedSearch) ||
-      numeroProposta.includes(searchWithoutHash);
+      numeroProposta.includes(normalizedSearch);
     
     const matchesTemp = tempFilter === "all" || item.temperatura === tempFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
@@ -224,7 +229,7 @@ const Index = () => {
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input 
-                placeholder="Nº Proposta, Integrador, Obra..." 
+                placeholder="Busca geral (Integrador, Obra...)" 
                 className="pl-10 bg-zinc-900 border-zinc-800 text-white rounded-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -310,7 +315,16 @@ const Index = () => {
                 <ProspectingForm onSave={handleAddProspect} />
               </TabsContent>
               <TabsContent value="followup" className="m-0">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <div className="relative w-40">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+                    <Input 
+                      placeholder="Nº Proposta" 
+                      className="pl-9 bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full"
+                      value={proposalFilter}
+                      onChange={(e) => setProposalFilter(e.target.value)}
+                    />
+                  </div>
                   <Select value={tempFilter} onValueChange={setTempFilter}>
                     <SelectTrigger className="w-[140px] bg-zinc-900 border-zinc-800 text-xs h-9 rounded-full">
                       <SelectValue placeholder="Temperatura" />
