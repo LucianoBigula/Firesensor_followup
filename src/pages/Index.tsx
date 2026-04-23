@@ -35,15 +35,13 @@ import {
 } from "@/components/ui/select";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("prospecting");
+  const [activeTab, setActiveTab] = useState("followup");
   
-  // Carregamento inicial com sanitização imediata
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
     try {
       const data = JSON.parse(saved);
-      // Sanitização preventiva: remove espaços e garante consistência
       return data.map((item: any) => ({
         ...item,
         status: String(item.status || "").trim(),
@@ -80,9 +78,11 @@ const Index = () => {
 
   // Lógica de Filtragem (SEQUENCIAL E INFALÍVEL)
   const filteredFollowUps = useMemo(() => {
+    // Começamos com todos os dados
     let result = [...followUps];
 
     // 1. Filtro de Status (Obrigatório e Excludente)
+    // Se o filtro não for "all", removemos TUDO que não for o status selecionado
     if (statusFilter !== "all") {
       result = result.filter(item => {
         const itemStatus = String(item.status || "").trim();
