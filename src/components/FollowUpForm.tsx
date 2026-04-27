@@ -17,6 +17,7 @@ interface FollowUpFormProps {
 
 const DEFAULT_FORM_STATE: Partial<FollowUp> = {
   dataAtualizacao: new Date().toISOString().split('T')[0],
+  dataProximaAcao: new Date().toISOString().split('T')[0],
   temperatura: 'Morna',
   expectativa: '30 dias',
   status: 'Em Andamento',
@@ -40,7 +41,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>(DEFAULT_FORM_STATE);
 
-  // Sincroniza os dados quando o diálogo abre ou os dados iniciais mudam
   useEffect(() => {
     if (open) {
       setFormData(initialData ? { ...initialData } : { ...DEFAULT_FORM_STATE });
@@ -61,13 +61,14 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
       ...formData,
       id: initialData?.id || Math.random().toString(36).substr(2, 9),
       valor: valorNumerico,
-      dataAtualizacao: formData.dataAtualizacao || new Date().toISOString().split('T')[0]
     } as FollowUp;
     
     onSave(followUpToSave);
     showSuccess(initialData ? "Registro atualizado!" : "Follow-up registrado!");
     setOpen(false);
   };
+
+  const isEncerrado = formData.status === 'Ganha' || formData.status === 'Perdida' || formData.status === 'Cancelada';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -115,54 +116,9 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </div>
 
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dados Cadastrais</h3>
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Status e Temperatura</h3>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-zinc-400">CNPJ</Label>
-            <Input value={formData.cnpj || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, cnpj: e.target.value}))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Responsável</Label>
-            <Input value={formData.responsavel || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, responsavel: e.target.value}))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Cidade</Label>
-            <Input value={formData.cidade || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, cidade: e.target.value}))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Telefone</Label>
-            <Input value={formData.telefone || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, telefone: e.target.value}))} />
-          </div>
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">E-mail</Label>
-            <Input type="email" value={formData.email || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
-          </div>
-
-          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
-            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Ações e Status</h3>
-          </div>
-
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Comentário da Última Ação</Label>
-            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
-          </div>
-          <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Próxima Ação Planejada</Label>
-            <Input value={formData.acaoFutura || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, acaoFutura: e.target.value}))} />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-zinc-400">Temperatura</Label>
-            <Select onValueChange={(v: Temperatura) => setFormData(prev => ({...prev, temperatura: v}))} value={formData.temperatura || "Morna"}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                <SelectItem value="Quente">Quente</SelectItem>
-                <SelectItem value="Morna">Morna</SelectItem>
-                <SelectItem value="Fria">Fria</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Status</Label>
             <Select onValueChange={(v: Status) => setFormData(prev => ({...prev, status: v}))} value={formData.status || "Em Andamento"}>
@@ -174,6 +130,42 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Temperatura</Label>
+            <Select onValueChange={(v: Temperatura) => setFormData(prev => ({...prev, temperatura: v}))} value={formData.temperatura || "Morna"}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectItem value="Quente">Quente</SelectItem>
+                <SelectItem value="Morna">Morna</SelectItem>
+                <SelectItem value="Fria">Fria</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {!isEncerrado && (
+            <>
+              <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
+                <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Próxima Atividade</h3>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-zinc-400">Data da Próxima Ação</Label>
+                <Input type="date" required value={formData.dataProximaAcao || ""} className="bg-zinc-800 border-zinc-700 text-white border-red-500/30" onChange={(e) => setFormData(prev => ({...prev, dataProximaAcao: e.target.value}))} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-zinc-400">Ação Planejada</Label>
+                <Input value={formData.acaoFutura || ""} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Ex: Ligar para confirmar" onChange={(e) => setFormData(prev => ({...prev, acaoFutura: e.target.value}))} />
+              </div>
+            </>
+          )}
+
+          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Histórico e Notas</h3>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-2">
+            <Label className="text-zinc-400">Comentário da Última Ação</Label>
+            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
           </div>
 
           <div className="col-span-1 md:col-span-2 pt-4">

@@ -6,8 +6,9 @@ export type SemanaMes = 'Semana 1' | 'Semana 2' | 'Semana 3' | 'Semana 4' | 'Sem
 
 export interface FollowUp {
   id: string;
-  prospectId?: string; // ID da prospecção de origem para evitar duplicatas
+  prospectId?: string;
   dataAtualizacao: string;
+  dataProximaAcao?: string; // Novo campo para controle de prazo
   numeroProposta: string;
   vendedor: string;
   integrador: string;

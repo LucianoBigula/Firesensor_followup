@@ -2,8 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
-import { format, differenceInDays, parseISO } from "date-fns";
-import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle, AlertCircle } from "lucide-react";
+import { format, isBefore, isToday, startOfDay } from "date-fns";
+import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle, AlertTriangle, Calendar, Clock } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 import { FollowUpForm } from "./FollowUpForm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -34,25 +34,38 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir este registro?")) {
-      onDelete(id);
-      showSuccess("Registro removido com sucesso.");
-    }
-  };
-
-  const formatDateCorrectly = (dateString: string) => {
+  const formatDateCorrectly = (dateString?: string) => {
     if (!dateString) return "";
     const [year, month, day] = dateString.split('-').map(Number);
     return format(new Date(year, month - 1, day), 'dd/MM/yyyy');
   };
 
-  const isOverdue = (dateString: string, status: string) => {
-    if (status !== 'Em Andamento') return false;
+  const getDeadlineStyle = (dateString?: string, status?: string) => {
+    if (!dateString || status !== 'Em Andamento') return { color: 'text-zinc-500', icon: null };
+    
     const [year, month, day] = dateString.split('-').map(Number);
-    const updateDate = new Date(year, month - 1, day);
-    const days = differenceInDays(new Date(), updateDate);
-    return days > 7;
+    const deadlineDate = startOfDay(new Date(year, month - 1, day));
+    const today = startOfDay(new Date());
+
+    if (isBefore(deadlineDate, today)) {
+      return { 
+        color: 'text-red-500 font-bold bg-red-500/10 px-2 py-1 rounded border border-red-500/20', 
+        icon: <AlertTriangle className="h-3.5 w-3.5 animate-pulse" />,
+        label: 'Atrasado'
+      };
+    }
+    if (isToday(deadlineDate)) {
+      return { 
+        color: 'text-amber-500 font-bold bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20', 
+        icon: <Clock className="h-3.5 w-3.5" />,
+        label: 'Hoje'
+      };
+    }
+    return { 
+      color: 'text-emerald-400 font-medium', 
+      icon: <Calendar className="h-3.5 w-3.5" />,
+      label: 'Agendado'
+    };
   };
 
   return (
@@ -61,130 +74,84 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
         <TableHeader className="bg-zinc-900">
           <TableRow className="border-zinc-800 hover:bg-transparent">
             <TableHead className="font-bold text-zinc-300">Vendedor</TableHead>
-            <TableHead className="font-bold text-zinc-300">Atualização</TableHead>
-            <TableHead className="font-bold text-zinc-300">Proposta / CNPJ</TableHead>
-            <TableHead className="font-bold text-zinc-300">Integrador / Obra / Ações</TableHead>
-            <TableHead className="font-bold text-zinc-300">Contato / Cidade</TableHead>
-            <TableHead className="font-bold text-zinc-300">Temperatura</TableHead>
+            <TableHead className="font-bold text-zinc-300">Proposta / Integrador</TableHead>
+            <TableHead className="font-bold text-zinc-300">Status / Temp</TableHead>
+            <TableHead className="font-bold text-zinc-300">Próxima Ação</TableHead>
+            <TableHead className="font-bold text-zinc-300 min-w-[140px]">Prazo</TableHead>
             <TableHead className="font-bold text-right text-zinc-300">Valor</TableHead>
-            <TableHead className="font-bold text-zinc-300">Status</TableHead>
             <TableHead className="font-bold text-center text-zinc-300">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
             <TableRow className="border-zinc-800">
-              <TableCell colSpan={9} className="text-center py-12 text-zinc-500">
-                Nenhum registro encontrado. Comece adicionando um novo follow-up.
-              </TableCell>
+              <TableCell colSpan={7} className="text-center py-12 text-zinc-500">Nenhum registro encontrado.</TableCell>
             </TableRow>
           ) : (
             data.map((item) => {
-              const overdue = isOverdue(item.dataAtualizacao, item.status);
+              const deadline = getDeadlineStyle(item.dataProximaAcao, item.status);
               
               return (
                 <TableRow key={item.id} className="border-zinc-800 hover:bg-zinc-800/30 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="bg-zinc-800 p-1.5 rounded-full">
-                        <User className="h-3.5 w-3.5 text-zinc-400" />
-                      </div>
+                      <User className="h-3.5 w-3.5 text-zinc-500" />
                       <span className="font-medium text-sm text-zinc-200">{item.vendedor}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm ${overdue ? 'text-red-400 font-bold' : 'text-zinc-400'}`}>
-                        {formatDateCorrectly(item.dataAtualizacao)}
-                      </span>
-                      {overdue && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <AlertCircle className="h-4 w-4 text-red-500 animate-pulse" />
-                            </TooltipTrigger>
-                            <TooltipContent className="bg-red-950 border-red-900 text-red-200">
-                              <p>Sem atualização há mais de 7 dias!</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium text-red-400">#{item.numeroProposta}</span>
-                      <span className="text-[10px] text-zinc-500">{item.cnpj || 'S/ CNPJ'}</span>
+                      <span className="text-xs text-zinc-200 font-semibold">{item.integrador}</span>
+                      <span className="text-[10px] text-zinc-500 uppercase">{item.obra}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-[250px]">
+                  <TableCell>
                     <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-sm text-zinc-200">{item.integrador}</span>
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{item.obra}</span>
-                      
-                      {(item.comentarioAcao || item.acaoFutura) && (
-                        <div className="mt-2 space-y-1 border-t border-zinc-800 pt-1">
-                          {item.comentarioAcao && (
-                            <div className="flex items-start gap-1.5 text-[10px] text-zinc-400 italic">
-                              <MessageSquare className="h-2.5 w-2.5 mt-0.5 text-zinc-500 shrink-0" />
-                              <span className="line-clamp-2">{item.comentarioAcao}</span>
-                            </div>
-                          )}
-                          {item.acaoFutura && (
-                            <div className="flex items-start gap-1.5 text-[10px] text-emerald-500/80 font-medium">
-                              <ArrowRightCircle className="h-2.5 w-2.5 mt-0.5 shrink-0" />
-                              <span className="line-clamp-2">{item.acaoFutura}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <Badge variant="outline" className={`${getStatusColor(item.status)} font-medium text-[9px] w-fit`}>
+                        {item.status}
+                      </Badge>
+                      <Badge variant="outline" className={`${getTempColor(item.temperatura)} font-medium text-[9px] w-fit`}>
+                        {item.temperatura}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    <div className="flex items-start gap-1.5 text-[11px] text-zinc-300">
+                      <ArrowRightCircle className="h-3 w-3 text-zinc-500 shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">{item.acaoFutura || (item.status === 'Em Andamento' ? 'Não definida' : 'Encerrado')}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-medium text-zinc-300">{item.responsavel || 'N/A'}</span>
-                      <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                        {item.cidade && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {item.cidade}</span>}
-                        {item.telefone && <span className="flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" /> {item.telefone}</span>}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`${getTempColor(item.temperatura)} font-medium text-[10px]`}>
-                      {item.temperatura}
-                    </Badge>
+                    {item.status === 'Em Andamento' ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className={`flex items-center gap-2 text-xs w-fit ${deadline.color}`}>
+                              {deadline.icon}
+                              <span>{formatDateCorrectly(item.dataProximaAcao)}</span>
+                            </div>
+                          </TooltipTrigger>
+                          {deadline.label && (
+                            <TooltipContent className="bg-zinc-800 border-zinc-700 text-white">
+                              <p>{deadline.label}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-[10px] text-zinc-600 italic">Finalizado</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right font-bold text-sm text-white">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`${getStatusColor(item.status)} font-medium text-[10px]`}>
-                      {item.status}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <FollowUpForm 
-                        onSave={onUpdate} 
-                        initialData={item}
-                        trigger={
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-zinc-500 hover:text-blue-400 hover:bg-blue-500/10"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <FollowUpForm onSave={onUpdate} initialData={item} trigger={
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-blue-400"><Pencil className="h-4 w-4" /></Button>
+                      } />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-red-500" onClick={() => { if(window.confirm("Excluir?")) onDelete(item.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
