@@ -9,7 +9,7 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
-import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, Target, BarChart3, Hash, Building2, X, Filter } from "lucide-react";
+import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, Target, BarChart3, Hash, Building2, X, Filter, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,6 @@ import {
 const Index = () => {
   const [activeTab, setActiveTab] = useState("followup");
   
-  // 1. ESTADO DOS DADOS (PURO, SEM PADRONIZAÇÃO NA FONTE)
   const [followUps, setFollowUps] = useState<FollowUp[]>(() => {
     const saved = localStorage.getItem("firesensor_followups");
     if (!saved) return [];
@@ -54,7 +53,6 @@ const Index = () => {
     } catch (e) { return []; }
   });
   
-  // 2. ESTADO DOS FILTROS
   const [searchTerm, setSearchTerm] = useState("");
   const [proposalFilter, setProposalFilter] = useState("");
   const [integradorFilter, setIntegradorFilter] = useState(""); 
@@ -63,43 +61,39 @@ const Index = () => {
   const [prospectStatusFilter, setProspectStatusFilter] = useState<string>("all");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
-  // 3. PERSISTÊNCIA
   useEffect(() => {
     localStorage.setItem("firesensor_followups", JSON.stringify(followUps));
     localStorage.setItem("firesensor_prospecting", JSON.stringify(prospects));
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // 4. LÓGICA DE FILTRAGEM VIA CONDICIONAIS (IF)
+  // LÓGICA CONDICIONAL DE FILTRAGEM
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // Lógica IF para Status
+      // Se o filtro de status for selecionado (diferente de 'all'), aplica a lógica
       if (statusFilter !== "all") {
         const itemStatus = (item.status || "").toString().trim().toLowerCase();
         const filterStatus = statusFilter.toLowerCase();
         if (itemStatus !== filterStatus) return false;
       }
 
-      // Lógica IF para Temperatura
+      // Se o filtro de temperatura for selecionado, aplica a lógica
       if (tempFilter !== "all") {
         const itemTemp = (item.temperatura || "").toString().trim().toLowerCase();
         const filterTemp = tempFilter.toLowerCase();
         if (itemTemp !== filterTemp) return false;
       }
 
-      // Lógica IF para Número da Proposta
       if (proposalFilter) {
         const cleanItemProp = normalizeText(item.numeroProposta).replace('#', '');
         const cleanSearchProp = normalizeText(proposalFilter).replace('#', '');
         if (!cleanItemProp.includes(cleanSearchProp)) return false;
       }
 
-      // Lógica IF para Integrador
       if (integradorFilter) {
         if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
       }
 
-      // Lógica IF para Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matchesGlobal = 
@@ -117,14 +111,13 @@ const Index = () => {
 
   const filteredProspects = useMemo(() => {
     return prospects.filter(item => {
-      // Lógica IF para Status de Prospecção
+      // Lógica condicional para Status de Prospecção
       if (prospectStatusFilter !== "all") {
         const itemStatus = (item.status || "").toString().trim().toLowerCase();
         const filterStatus = prospectStatusFilter.toLowerCase();
         if (itemStatus !== filterStatus) return false;
       }
 
-      // Lógica IF para Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         return normalizeText(item.empresa).includes(search) ||
@@ -135,7 +128,6 @@ const Index = () => {
     });
   }, [prospects, prospectStatusFilter, searchTerm]);
 
-  // 5. AÇÕES
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
   const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
   const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
@@ -143,6 +135,56 @@ const Index = () => {
   const handleAddProspect = (newProspect: Prospecting) => setProspects([newProspect, ...prospects]);
   const handleUpdateProspect = (updated: Prospecting) => setProspects(prospects.map(item => item.id === updated.id ? updated : item));
   const handleDeleteProspect = (id: string) => setProspects(prospects.filter(item => item.id !== id));
+
+  const handleSimulateData = () => {
+    const mockData: FollowUp[] = [
+      {
+        id: "sim-1",
+        vendedor: "Simulador",
+        dataAtualizacao: new Date().toISOString().split('T')[0],
+        numeroProposta: "9999",
+        integrador: "Teste de Filtro 1",
+        obra: "Obra Suja",
+        valor: 15000,
+        status: "em andamento " as any,
+        temperatura: "QUENTE" as any,
+        diaSemana: "Segunda",
+        semanaMes: "Semana 1",
+        expectativa: "30 dias"
+      }
+    ];
+    
+    const mockProspects: Prospecting[] = [
+      {
+        id: "sim-p1",
+        vendedor: "Simulador",
+        dataRegistro: new Date().toISOString().split('T')[0],
+        empresa: "Empresa Atrasada",
+        contato: "João",
+        origem: "Indicação",
+        status: "Novo Lead",
+        observacoes: "Teste",
+        proximoPasso: "Ligar urgente",
+        dataProximoPasso: "2023-01-01" // Data no passado para testar alerta
+      },
+      {
+        id: "sim-p2",
+        vendedor: "Simulador",
+        dataRegistro: new Date().toISOString().split('T')[0],
+        empresa: "Empresa Hoje",
+        contato: "Maria",
+        origem: "Site/Google",
+        status: "Em Contato",
+        observacoes: "Teste",
+        proximoPasso: "Enviar e-mail",
+        dataProximoPasso: new Date().toISOString().split('T')[0] // Hoje
+      }
+    ];
+
+    setFollowUps([...mockData, ...followUps]);
+    setProspects([...mockProspects, ...prospects]);
+    showSuccess("Dados de simulação adicionados! Verifique os alertas de prazo na aba Prospecção.");
+  };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -171,6 +213,9 @@ const Index = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={handleSimulateData} variant="outline" size="sm" className="bg-blue-900/20 border-blue-800 text-blue-400 hover:bg-blue-900/40">
+              <FlaskConical className="mr-2 h-4 w-4" /> Simular Dados
+            </Button>
             <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps([...f, ...followUps]); setProspects([...p, ...prospects]); }} />
             <Button onClick={() => { localStorage.setItem("firesensor_followups", JSON.stringify(followUps)); showSuccess("Dados salvos!"); }} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
             <AlertDialog>
