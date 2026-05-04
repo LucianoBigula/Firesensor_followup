@@ -47,7 +47,7 @@ export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActi
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
     
-    showSuccess("Dados exportados em JSON!");
+    showSuccess("Dados exportados!");
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +85,7 @@ export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActi
         <Upload className="mr-2 h-4 w-4" /> Importar
       </ShadcnButton>
       <ShadcnButton variant="outline" size="sm" onClick={handleExportJSON} className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white">
-        <Download className="mr-2 h-4 w-4" /> Exportar JSON
+        <Download className="mr-2 h-4 w-4" /> Exportar
       </ShadcnButton>
     </div>
   );
