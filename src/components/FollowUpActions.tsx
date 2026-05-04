@@ -1,5 +1,5 @@
 import { Button as ShadcnButton } from "@/components/ui/button";
-import { Download, Upload, FileCode } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { FollowUp } from "@/types/follow-up";
 import { Prospecting } from "@/types/prospecting";
 import { showSuccess, showError } from "@/utils/toast";
@@ -50,51 +50,6 @@ export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActi
     showSuccess("Dados exportados em JSON!");
   };
 
-  const handleExportXML = () => {
-    if (followUps.length === 0 && prospects.length === 0) {
-      showError("Não há dados para exportar.");
-      return;
-    }
-
-    let xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xmlString += '<CRMExport>\n';
-    xmlString += `  <ExportDate>${new Date().toISOString()}</ExportDate>\n`;
-    
-    // Prospects
-    xmlString += '  <Prospects>\n';
-    prospects.forEach(p => {
-      xmlString += '    <Prospect>\n';
-      Object.entries(p).forEach(([key, value]) => {
-        xmlString += `      <${key}>${value !== undefined ? String(value).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>') : ''}</${key}>\n`;
-      });
-      xmlString += '    </Prospect>\n';
-    });
-    xmlString += '  </Prospects>\n';
-
-    // FollowUps
-    xmlString += '  <FollowUps>\n';
-    followUps.forEach(f => {
-      xmlString += '    <FollowUp>\n';
-      Object.entries(f).forEach(([key, value]) => {
-        xmlString += `      <${key}>${value !== undefined ? String(value).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>') : ''}</${key}>\n`;
-      });
-      xmlString += '    </FollowUp>\n';
-    });
-    xmlString += '  </FollowUps>\n';
-    
-    xmlString += '</CRMExport>';
-
-    const dataUri = 'data:text/xml;charset=utf-8,'+ encodeURIComponent(xmlString);
-    const exportFileDefaultName = `firesensor-comercial-${new Date().toISOString().split('T')[0]}.xml`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    showSuccess("Dados exportados em XML!");
-  };
-
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -131,9 +86,6 @@ export const FollowUpActions = ({ followUps, prospects, onImport }: FollowUpActi
       </ShadcnButton>
       <ShadcnButton variant="outline" size="sm" onClick={handleExportJSON} className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white">
         <Download className="mr-2 h-4 w-4" /> Exportar JSON
-      </ShadcnButton>
-      <ShadcnButton variant="outline" size="sm" onClick={handleExportXML} className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white">
-        <FileCode className="mr-2 h-4 w-4" /> Exportar XML
       </ShadcnButton>
     </div>
   );
