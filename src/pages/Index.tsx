@@ -9,6 +9,7 @@ import { FollowUpDashboard } from "@/components/FollowUpDashboard";
 import { ProspectingTable } from "@/components/ProspectingTable";
 import { ProspectingForm } from "@/components/ProspectingForm";
 import { ProspectingDashboard } from "@/components/ProspectingDashboard";
+import { CommercialAlerts } from "@/components/CommercialAlerts";
 import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, Target, BarChart3, Hash, Building2, X, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -171,6 +172,9 @@ const Index = () => {
             </AlertDialog>
           </div>
         </div>
+
+        {/* Central de Alertas Críticos */}
+        <CommercialAlerts prospects={prospects} followUps={followUps} />
 
         {/* Barra de Filtros */}
         <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl mb-6 flex flex-wrap items-center gap-4">
