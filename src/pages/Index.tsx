@@ -68,7 +68,6 @@ const Index = () => {
     setLastSaved(new Date().toLocaleTimeString());
   }, [followUps, prospects]);
 
-  // LÓGICA CONDICIONAL DE FILTRAGEM
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
       if (statusFilter !== "all") {
@@ -126,13 +125,19 @@ const Index = () => {
     });
   }, [prospects, prospectStatusFilter, searchTerm]);
 
-  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps([newFollowUp, ...followUps]);
-  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(followUps.map(item => item.id === updated.id ? updated : item));
-  const handleDeleteFollowUp = (id: string) => setFollowUps(followUps.filter(item => item.id !== id));
+  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps(prev => [newFollowUp, ...prev]);
+  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(prev => prev.map(item => item.id === updated.id ? updated : item));
+  const handleDeleteFollowUp = (id: string) => {
+    setFollowUps(prev => prev.filter(item => item.id !== id));
+    showSuccess("Proposta removida com sucesso.");
+  };
   
-  const handleAddProspect = (newProspect: Prospecting) => setProspects([newProspect, ...prospects]);
-  const handleUpdateProspect = (updated: Prospecting) => setProspects(prospects.map(item => item.id === updated.id ? updated : item));
-  const handleDeleteProspect = (id: string) => setProspects(prospects.filter(item => item.id !== id));
+  const handleAddProspect = (newProspect: Prospecting) => setProspects(prev => [newProspect, ...prev]);
+  const handleUpdateProspect = (updated: Prospecting) => setProspects(prev => prev.map(item => item.id === updated.id ? updated : item));
+  const handleDeleteProspect = (id: string) => {
+    setProspects(prev => prev.filter(item => item.id !== id));
+    showSuccess("Prospecção removida com sucesso.");
+  };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -161,7 +166,7 @@ const Index = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps([...f, ...followUps]); setProspects([...p, ...prospects]); }} />
+            <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps(prev => [...f, ...prev]); setProspects(prev => [...p, ...prev]); }} />
             <Button onClick={() => { localStorage.setItem("firesensor_followups", JSON.stringify(followUps)); showSuccess("Dados salvos!"); }} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400"><Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo</Button></AlertDialogTrigger>
