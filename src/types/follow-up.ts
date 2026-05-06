@@ -8,7 +8,7 @@ export interface FollowUp {
   id: string;
   prospectId?: string;
   dataAtualizacao: string;
-  dataProximaAcao?: string; // Novo campo para controle de prazo
+  dataProximaAcao?: string;
   numeroProposta: string;
   vendedor: string;
   integrador: string;
@@ -26,4 +26,6 @@ export interface FollowUp {
   telefone?: string;
   comentarioAcao?: string;
   acaoFutura?: string;
+  arquivoPdf?: string; // String Base64 do arquivo
+  nomeArquivo?: string; // Nome original do arquivo
 }

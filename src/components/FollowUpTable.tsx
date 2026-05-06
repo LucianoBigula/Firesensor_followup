@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
-import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle, AlertTriangle, Calendar, Clock } from "lucide-react";
+import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle, AlertTriangle, Calendar, Clock, FileText, ExternalLink } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
 import { FollowUpForm } from "./FollowUpForm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -68,6 +68,13 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
     };
   };
 
+  const openPdf = (base64: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = base64;
+    link.download = fileName;
+    link.click();
+  };
+
   return (
     <div className="bg-zinc-900/50 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden">
       <Table>
@@ -101,7 +108,26 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-red-400">#{item.numeroProposta}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-red-400">#{item.numeroProposta}</span>
+                        {item.arquivoPdf && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button 
+                                  onClick={() => openPdf(item.arquivoPdf!, item.nomeArquivo || 'proposta.pdf')}
+                                  className="text-emerald-500 hover:text-emerald-400 transition-colors"
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-zinc-800 border-zinc-700 text-white">
+                                <p>Baixar PDF: {item.nomeArquivo}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <span className="text-xs text-zinc-200 font-semibold">{item.integrador}</span>
                       <span className="text-[10px] text-zinc-500 uppercase">{item.obra}</span>
                     </div>

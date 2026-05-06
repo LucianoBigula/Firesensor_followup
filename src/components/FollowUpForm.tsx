@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FollowUp, Temperatura, Expectativa, Status, DiaSemana, SemanaMes } from "@/types/follow-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, FileText, X, Paperclip } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
+import { fileToBase64, validatePdfFile } from "@/utils/file-utils";
 
 interface FollowUpFormProps {
   onSave: (followUp: FollowUp) => void;
@@ -34,18 +35,54 @@ const DEFAULT_FORM_STATE: Partial<FollowUp> = {
   email: "",
   telefone: "",
   comentarioAcao: "",
-  acaoFutura: ""
+  acaoFutura: "",
+  arquivoPdf: undefined,
+  nomeArquivo: undefined
 };
 
 export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>(DEFAULT_FORM_STATE);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setFormData(initialData ? { ...initialData } : { ...DEFAULT_FORM_STATE });
     }
   }, [open, initialData]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const error = validatePdfFile(file);
+    if (error) {
+      showError(error);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      const base64 = await fileToBase64(file);
+      setFormData(prev => ({
+        ...prev,
+        arquivoPdf: base64,
+        nomeArquivo: file.name
+      }));
+      showSuccess("PDF anexado com sucesso!");
+    } catch (err) {
+      showError("Erro ao processar o arquivo.");
+    }
+  };
+
+  const removeFile = () => {
+    setFormData(prev => ({
+      ...prev,
+      arquivoPdf: undefined,
+      nomeArquivo: undefined
+    }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +150,40 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           <div className="space-y-2">
             <Label className="text-zinc-400">Obra</Label>
             <Input required value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
+          </div>
+
+          <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
+            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Anexo de Proposta (PDF)</h3>
+          </div>
+
+          <div className="col-span-1 md:col-span-2 space-y-3">
+            <div className="flex items-center gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="mr-2 h-4 w-4" /> {formData.arquivoPdf ? "Alterar PDF" : "Anexar PDF (Máx 1MB)"}
+              </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                accept="application/pdf" 
+                className="hidden" 
+              />
+              {formData.nomeArquivo && (
+                <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-md">
+                  <FileText className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs text-emerald-400 truncate max-w-[200px]">{formData.nomeArquivo}</span>
+                  <button type="button" onClick={removeFile} className="text-zinc-500 hover:text-red-500">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-[10px] text-zinc-500 italic">O arquivo será salvo localmente no seu navegador.</p>
           </div>
 
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
