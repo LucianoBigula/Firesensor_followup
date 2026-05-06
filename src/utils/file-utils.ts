@@ -7,6 +7,17 @@ export const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+export const base64ToBlob = (base64: string, type: string) => {
+  const base64Data = base64.split(',')[1];
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type });
+};
+
 export const MAX_FILE_SIZE = 1024 * 1024; // 1MB em bytes
 
 export const validatePdfFile = (file: File): string | null => {

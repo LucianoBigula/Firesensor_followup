@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
-import { User, Trash2, Pencil, MapPin, Phone, MessageSquare, ArrowRightCircle, AlertTriangle, Calendar, Clock, FileText, ExternalLink } from "lucide-react";
-import { showSuccess } from "@/utils/toast";
+import { User, Trash2, Pencil, ArrowRightCircle, AlertTriangle, Calendar, Clock, FileText } from "lucide-react";
 import { FollowUpForm } from "./FollowUpForm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { base64ToBlob } from "@/utils/file-utils";
 
 interface FollowUpTableProps {
   data: FollowUp[];
@@ -68,11 +68,16 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
     };
   };
 
-  const openPdf = (base64: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = base64;
-    link.download = fileName;
-    link.click();
+  const viewPdf = (base64: string) => {
+    try {
+      const blob = base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Limpa a URL da memória após um tempo para evitar vazamento
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Erro ao abrir PDF:", error);
+    }
   };
 
   return (
@@ -115,14 +120,15 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button 
-                                  onClick={() => openPdf(item.arquivoPdf!, item.nomeArquivo || 'proposta.pdf')}
-                                  className="text-emerald-500 hover:text-emerald-400 transition-colors"
+                                  onClick={() => viewPdf(item.arquivoPdf!)}
+                                  className="text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1"
                                 >
                                   <FileText className="h-3.5 w-3.5" />
+                                  <span className="text-[9px] font-bold uppercase">Ver PDF</span>
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent className="bg-zinc-800 border-zinc-700 text-white">
-                                <p>Baixar PDF: {item.nomeArquivo}</p>
+                                <p>Visualizar/Baixar: {item.nomeArquivo}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
