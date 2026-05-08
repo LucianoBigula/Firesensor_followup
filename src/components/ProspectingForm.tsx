@@ -44,7 +44,7 @@ export const ProspectingForm = ({ onSave, initialData, trigger }: ProspectingFor
     const prospectToSave: Prospecting = {
       ...DEFAULT_FORM_STATE,
       ...formData,
-      id: initialData?.id || Math.random().toString(36).substr(2, 9),
+      id: initialData?.id || crypto.randomUUID(),
     } as Prospecting;
     
     onSave(prospectToSave);

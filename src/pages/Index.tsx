@@ -127,15 +127,33 @@ const Index = () => {
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps(prev => [newFollowUp, ...prev]);
   const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(prev => prev.map(item => item.id === updated.id ? updated : item));
+  
   const handleDeleteFollowUp = (id: string) => {
-    setFollowUps(prev => prev.filter(item => item.id !== id));
+    setFollowUps(prev => {
+      const index = prev.findIndex(item => item.id === id);
+      if (index !== -1) {
+        const newArr = [...prev];
+        newArr.splice(index, 1);
+        return newArr;
+      }
+      return prev;
+    });
     showSuccess("Proposta removida com sucesso.");
   };
   
   const handleAddProspect = (newProspect: Prospecting) => setProspects(prev => [newProspect, ...prev]);
   const handleUpdateProspect = (updated: Prospecting) => setProspects(prev => prev.map(item => item.id === updated.id ? updated : item));
+  
   const handleDeleteProspect = (id: string) => {
-    setProspects(prev => prev.filter(item => item.id !== id));
+    setProspects(prev => {
+      const index = prev.findIndex(item => item.id === id);
+      if (index !== -1) {
+        const newArr = [...prev];
+        newArr.splice(index, 1);
+        return newArr;
+      }
+      return prev;
+    });
     showSuccess("Prospecção removida com sucesso.");
   };
 
