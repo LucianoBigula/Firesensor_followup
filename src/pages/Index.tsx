@@ -70,35 +70,40 @@ const Index = () => {
 
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
+      // Filtro de Status
       if (statusFilter !== "all") {
         const itemStatus = (item.status || "").toString().trim().toLowerCase();
         const filterStatus = statusFilter.toLowerCase();
         if (itemStatus !== filterStatus) return false;
       }
 
+      // Filtro de Temperatura
       if (tempFilter !== "all") {
         const itemTemp = (item.temperatura || "").toString().trim().toLowerCase();
         const filterTemp = tempFilter.toLowerCase();
         if (itemTemp !== filterTemp) return false;
       }
 
+      // Filtro de Número de Proposta (Melhorado)
       if (proposalFilter) {
-        const cleanItemProp = normalizeText(item.numeroProposta).replace('#', '');
-        const cleanSearchProp = normalizeText(proposalFilter).replace('#', '');
+        const cleanItemProp = normalizeText(String(item.numeroProposta || "")).replace(/#/g, '');
+        const cleanSearchProp = normalizeText(proposalFilter).replace(/#/g, '');
         if (!cleanItemProp.includes(cleanSearchProp)) return false;
       }
 
+      // Filtro de Integrador
       if (integradorFilter) {
-        if (!normalizeText(item.integrador).includes(normalizeText(integradorFilter))) return false;
+        if (!normalizeText(item.integrador || "").includes(normalizeText(integradorFilter))) return false;
       }
 
+      // Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matchesGlobal = 
-          normalizeText(item.vendedor).includes(search) ||
-          normalizeText(item.obra).includes(search) ||
+          normalizeText(item.vendedor || "").includes(search) ||
+          normalizeText(item.obra || "").includes(search) ||
           normalizeText(item.cidade || "").includes(search) ||
-          normalizeText(item.integrador).includes(search);
+          normalizeText(item.integrador || "").includes(search);
         
         if (!matchesGlobal) return false;
       }
@@ -117,16 +122,28 @@ const Index = () => {
 
       if (searchTerm) {
         const search = normalizeText(searchTerm);
-        return normalizeText(item.empresa).includes(search) ||
-               normalizeText(item.vendedor).includes(search) ||
-               normalizeText(item.contato).includes(search);
+        return normalizeText(item.empresa || "").includes(search) ||
+               normalizeText(item.vendedor || "").includes(search) ||
+               normalizeText(item.contato || "").includes(search);
       }
       return true;
     });
   }, [prospects, prospectStatusFilter, searchTerm]);
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps(prev => [newFollowUp, ...prev]);
-  const handleUpdateFollowUp = (updated: FollowUp) => setFollowUps(prev => prev.map(item => item.id === updated.id ? updated : item));
+  
+  // Atualização baseada em ID, mas garantindo que apenas a primeira ocorrência seja alterada
+  const handleUpdateFollowUp = (updated: FollowUp) => {
+    setFollowUps(prev => {
+      const index = prev.findIndex(item => item.id === updated.id);
+      if (index !== -1) {
+        const newArr = [...prev];
+        newArr[index] = updated;
+        return newArr;
+      }
+      return prev;
+    });
+  };
   
   const handleDeleteFollowUp = (id: string) => {
     setFollowUps(prev => {
@@ -142,7 +159,18 @@ const Index = () => {
   };
   
   const handleAddProspect = (newProspect: Prospecting) => setProspects(prev => [newProspect, ...prev]);
-  const handleUpdateProspect = (updated: Prospecting) => setProspects(prev => prev.map(item => item.id === updated.id ? updated : item));
+  
+  const handleUpdateProspect = (updated: Prospecting) => {
+    setProspects(prev => {
+      const index = prev.findIndex(item => item.id === updated.id);
+      if (index !== -1) {
+        const newArr = [...prev];
+        newArr[index] = updated;
+        return newArr;
+      }
+      return prev;
+    });
+  };
   
   const handleDeleteProspect = (id: string) => {
     setProspects(prev => {
@@ -293,6 +321,7 @@ const Index = () => {
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-red-500 font-bold text-lg border-b border-zinc-800 pb-2"><BarChart3 className="h-5 w-5" /> Dashboard de Follow-up</div>
+              <BarChart3 className="h-5 w-5" />
               <FollowUpDashboard data={filteredFollowUps} />
             </div>
           </TabsContent>
