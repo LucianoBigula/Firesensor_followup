@@ -148,8 +148,8 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
             <Input required value={formData.integrador || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, integrador: e.target.value}))} />
           </div>
           <div className="space-y-2">
-            <Label className="text-zinc-400">Obra</Label>
-            <Input required value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, drama: e.target.value}))} />
+            <Label className="text-zinc-400">Obra (Opcional)</Label>
+            <Input value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
           </div>
 
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
