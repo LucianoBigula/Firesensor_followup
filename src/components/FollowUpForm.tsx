@@ -93,6 +93,12 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
       return;
     }
 
+    // Validação extra de segurança para o comentário
+    if (!formData.comentarioAcao?.trim()) {
+      showError("O comentário da última ação é obrigatório.");
+      return;
+    }
+
     const followUpToSave: FollowUp = {
       ...DEFAULT_FORM_STATE,
       ...formData,
@@ -235,8 +241,14 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </div>
 
           <div className="col-span-1 md:col-span-2 space-y-2">
-            <Label className="text-zinc-400">Comentário da Última Ação</Label>
-            <Textarea value={formData.comentarioAcao || ""} className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} />
+            <Label className="text-zinc-400">Comentário da Última Ação <span className="text-red-500">*</span></Label>
+            <Textarea 
+              required 
+              value={formData.comentarioAcao || ""} 
+              className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" 
+              placeholder="Descreva o que foi conversado ou o motivo da alteração..."
+              onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} 
+            />
           </div>
 
           <div className="col-span-1 md:col-span-2 pt-4">
