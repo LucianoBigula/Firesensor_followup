@@ -10,11 +10,12 @@ import { base64ToBlob } from "@/utils/file-utils";
 
 interface FollowUpTableProps {
   data: FollowUp[];
+  allFollowUps: FollowUp[];
   onDelete: (id: string) => void;
   onUpdate: (followUp: FollowUp) => void;
 }
 
-export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) => {
+export const FollowUpTable = ({ data, allFollowUps, onDelete, onUpdate }: FollowUpTableProps) => {
   const getTempColor = (temp: string) => {
     switch (temp) {
       case 'Quente': return 'bg-red-500/20 text-red-400 border-red-500/30';
@@ -182,7 +183,7 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                       <FollowUpForm 
                         onSave={onUpdate} 
                         initialData={item} 
-                        existingFollowUps={data}
+                        existingFollowUps={allFollowUps}
                         trigger={
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-blue-400"><Pencil className="h-4 w-4" /></Button>
                         } 

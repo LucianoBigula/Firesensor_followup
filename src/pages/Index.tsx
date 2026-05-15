@@ -14,7 +14,7 @@ import { Search, LayoutDashboard, List, Save, CheckCircle2, Trash2, Target, BarC
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { normalizeText } from "@/lib/utils";
 import {
   AlertDialog,
@@ -125,7 +125,16 @@ const Index = () => {
     });
   }, [prospects, prospectStatusFilter, searchTerm]);
 
-  const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps(prev => [newFollowUp, ...prev]);
+  const handleAddFollowUp = (newFollowUp: FollowUp) => {
+    const cleanNum = normalizeText(newFollowUp.numeroProposta || "").replace(/#/g, '');
+    const exists = followUps.some(f => normalizeText(f.numeroProposta || "").replace(/#/g, '') === cleanNum);
+    
+    if (exists) {
+      showError(`Erro crítico: A proposta #${cleanNum} já existe.`);
+      return;
+    }
+    setFollowUps(prev => [newFollowUp, ...prev]);
+  };
   
   const handleUpdateFollowUp = (updated: FollowUp) => {
     setFollowUps(prev => {
@@ -166,11 +175,24 @@ const Index = () => {
   const handleImportData = (importedFollowUps: FollowUp[], importedProspects: Prospecting[]) => {
     setFollowUps(prev => {
       const existingNumbers = new Set(prev.map(f => normalizeText(f.numeroProposta || "").replace(/#/g, '')));
-      const uniqueNewFollowUps = importedFollowUps.filter(f => {
+      const newFollowUps: FollowUp[] = [];
+      const seenInImport = new Set<string>();
+
+      importedFollowUps.forEach(f => {
         const cleanNum = normalizeText(f.numeroProposta || "").replace(/#/g, '');
-        return !existingNumbers.has(cleanNum);
+        if (cleanNum && !existingNumbers.has(cleanNum) && !seenInImport.has(cleanNum)) {
+          newFollowUps.push(f);
+          seenInImport.add(cleanNum);
+        }
       });
-      return [...uniqueNewFollowUps, ...prev];
+      
+      if (newFollowUps.length === 0 && importedFollowUps.length > 0) {
+        showError("Nenhum registro novo encontrado (todos já existem ou estão duplicados no arquivo).");
+      } else if (newFollowUps.length < importedFollowUps.length) {
+        showSuccess(`${newFollowUps.length} novos registros importados. Duplicados foram ignorados.`);
+      }
+
+      return [...newFollowUps, ...prev];
     });
 
     setProspects(prev => {
@@ -306,7 +328,12 @@ const Index = () => {
 
           <TabsContent value="followup" className="space-y-6 outline-none">
             <FollowUpStats data={filteredFollowUps} />
-            <FollowUpTable data={filteredFollowUps} onDelete={handleDeleteFollowUp} onUpdate={handleUpdateFollowUp} />
+            <FollowUpTable 
+              data={filteredFollowUps} 
+              allFollowUps={followUps} 
+              onDelete={handleDeleteFollowUp} 
+              onUpdate={handleUpdateFollowUp} 
+            />
           </TabsContent>
 
           <TabsContent value="dashboard" className="outline-none space-y-8">
