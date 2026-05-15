@@ -73,7 +73,6 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
       const blob = base64ToBlob(base64, 'application/pdf');
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
-      // Limpa a URL da memória após um tempo para evitar vazamento
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
       console.error("Erro ao abrir PDF:", error);
@@ -180,9 +179,14 @@ export const FollowUpTable = ({ data, onDelete, onUpdate }: FollowUpTableProps) 
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <FollowUpForm onSave={onUpdate} initialData={item} trigger={
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-blue-400"><Pencil className="h-4 w-4" /></Button>
-                      } />
+                      <FollowUpForm 
+                        onSave={onUpdate} 
+                        initialData={item} 
+                        existingFollowUps={data}
+                        trigger={
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-blue-400"><Pencil className="h-4 w-4" /></Button>
+                        } 
+                      />
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-red-500" onClick={() => { if(window.confirm("Excluir?")) onDelete(item.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>

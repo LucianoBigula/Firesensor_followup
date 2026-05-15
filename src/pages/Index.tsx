@@ -70,33 +70,28 @@ const Index = () => {
 
   const filteredFollowUps = useMemo(() => {
     return followUps.filter(item => {
-      // Filtro de Status
       if (statusFilter !== "all") {
         const itemStatus = (item.status || "").toString().trim().toLowerCase();
         const filterStatus = statusFilter.toLowerCase();
         if (itemStatus !== filterStatus) return false;
       }
 
-      // Filtro de Temperatura
       if (tempFilter !== "all") {
         const itemTemp = (item.temperatura || "").toString().trim().toLowerCase();
         const filterTemp = tempFilter.toLowerCase();
         if (itemTemp !== filterTemp) return false;
       }
 
-      // Filtro de Número de Proposta (Melhorado)
       if (proposalFilter) {
         const cleanItemProp = normalizeText(String(item.numeroProposta || "")).replace(/#/g, '');
         const cleanSearchProp = normalizeText(proposalFilter).replace(/#/g, '');
         if (!cleanItemProp.includes(cleanSearchProp)) return false;
       }
 
-      // Filtro de Integrador
       if (integradorFilter) {
         if (!normalizeText(item.integrador || "").includes(normalizeText(integradorFilter))) return false;
       }
 
-      // Busca Global
       if (searchTerm) {
         const search = normalizeText(searchTerm);
         const matchesGlobal = 
@@ -132,7 +127,6 @@ const Index = () => {
 
   const handleAddFollowUp = (newFollowUp: FollowUp) => setFollowUps(prev => [newFollowUp, ...prev]);
   
-  // Atualização baseada em ID, mas garantindo que apenas a primeira ocorrência seja alterada
   const handleUpdateFollowUp = (updated: FollowUp) => {
     setFollowUps(prev => {
       const index = prev.findIndex(item => item.id === updated.id);
@@ -146,15 +140,7 @@ const Index = () => {
   };
   
   const handleDeleteFollowUp = (id: string) => {
-    setFollowUps(prev => {
-      const index = prev.findIndex(item => item.id === id);
-      if (index !== -1) {
-        const newArr = [...prev];
-        newArr.splice(index, 1);
-        return newArr;
-      }
-      return prev;
-    });
+    setFollowUps(prev => prev.filter(item => item.id !== id));
     showSuccess("Proposta removida com sucesso.");
   };
   
@@ -173,16 +159,25 @@ const Index = () => {
   };
   
   const handleDeleteProspect = (id: string) => {
-    setProspects(prev => {
-      const index = prev.findIndex(item => item.id === id);
-      if (index !== -1) {
-        const newArr = [...prev];
-        newArr.splice(index, 1);
-        return newArr;
-      }
-      return prev;
-    });
+    setProspects(prev => prev.filter(item => item.id !== id));
     showSuccess("Prospecção removida com sucesso.");
+  };
+
+  const handleImportData = (importedFollowUps: FollowUp[], importedProspects: Prospecting[]) => {
+    setFollowUps(prev => {
+      const existingNumbers = new Set(prev.map(f => normalizeText(f.numeroProposta || "").replace(/#/g, '')));
+      const uniqueNewFollowUps = importedFollowUps.filter(f => {
+        const cleanNum = normalizeText(f.numeroProposta || "").replace(/#/g, '');
+        return !existingNumbers.has(cleanNum);
+      });
+      return [...uniqueNewFollowUps, ...prev];
+    });
+
+    setProspects(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const uniqueNewProspects = importedProspects.filter(p => !existingIds.has(p.id));
+      return [...uniqueNewProspects, ...prev];
+    });
   };
 
   const clearFilters = () => {
@@ -212,7 +207,7 @@ const Index = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <FollowUpActions followUps={followUps} prospects={prospects} onImport={(f, p) => { setFollowUps(prev => [...f, ...prev]); setProspects(prev => [...p, ...prev]); }} />
+            <FollowUpActions followUps={followUps} prospects={prospects} onImport={handleImportData} />
             <Button onClick={() => { localStorage.setItem("firesensor_followups", JSON.stringify(followUps)); showSuccess("Dados salvos!"); }} variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-300"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-red-400"><Trash2 className="mr-2 h-4 w-4" /> Limpar Tudo</Button></AlertDialogTrigger>
@@ -301,7 +296,7 @@ const Index = () => {
             </TabsList>
             <div className="flex items-center gap-2">
               {activeTab === "prospecting" && <ProspectingForm onSave={handleAddProspect} />}
-              {activeTab === "followup" && <FollowUpForm onSave={handleAddFollowUp} />}
+              {activeTab === "followup" && <FollowUpForm onSave={handleAddFollowUp} existingFollowUps={followUps} />}
             </div>
           </div>
 
@@ -321,7 +316,6 @@ const Index = () => {
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-red-500 font-bold text-lg border-b border-zinc-800 pb-2"><BarChart3 className="h-5 w-5" /> Dashboard de Follow-up</div>
-              <BarChart3 className="h-5 w-5" />
               <FollowUpDashboard data={filteredFollowUps} />
             </div>
           </TabsContent>

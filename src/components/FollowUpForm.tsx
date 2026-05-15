@@ -9,11 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PlusCircle, FileText, X, Paperclip } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { fileToBase64, validatePdfFile } from "@/utils/file-utils";
+import { normalizeText } from "@/lib/utils";
 
 interface FollowUpFormProps {
   onSave: (followUp: FollowUp) => void;
   initialData?: FollowUp;
   trigger?: React.ReactNode;
+  existingFollowUps?: FollowUp[];
 }
 
 const DEFAULT_FORM_STATE: Partial<FollowUp> = {
@@ -40,7 +42,7 @@ const DEFAULT_FORM_STATE: Partial<FollowUp> = {
   nomeArquivo: undefined
 };
 
-export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps) => {
+export const FollowUpForm = ({ onSave, initialData, trigger, existingFollowUps = [] }: FollowUpFormProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FollowUp>>(DEFAULT_FORM_STATE);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,7 +95,22 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
       return;
     }
 
-    // Validação extra de segurança para o comentário
+    // Validação de duplicidade de número de proposta
+    const cleanNewNumber = normalizeText(formData.numeroProposta || "").replace(/#/g, '');
+    const isDuplicate = existingFollowUps.some(item => {
+      // Se estiver editando, ignora o próprio item
+      if (initialData && item.id === initialData.id) return false;
+      
+      const cleanExistingNumber = normalizeText(item.numeroProposta || "").replace(/#/g, '');
+      return cleanExistingNumber === cleanNewNumber;
+    });
+
+    if (isDuplicate) {
+      showError(`Já existe uma proposta com o número #${cleanNewNumber}.`);
+      return;
+    }
+
+    // Validação de comentário obrigatório
     if (!formData.comentarioAcao?.trim()) {
       showError("O comentário da última ação é obrigatório.");
       return;
@@ -143,7 +160,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Nº da Proposta</Label>
-            <Input required value={formData.numeroProposta || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, numeroProposta: e.target.value}))} />
+            <Input required value={formData.numeroProposta || ""} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Ex: 1234" onChange={(e) => setFormData(prev => ({...prev, numeroProposta: e.target.value}))} />
           </div>
           <div className="space-y-2">
             <Label className="text-zinc-400">Valor (R$)</Label>
@@ -189,7 +206,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
                 </div>
               )}
             </div>
-            <p className="text-[10px] text-zinc-500 italic">O arquivo será salvo localmente no seu navegador.</p>
           </div>
 
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
@@ -246,7 +262,7 @@ export const FollowUpForm = ({ onSave, initialData, trigger }: FollowUpFormProps
               required 
               value={formData.comentarioAcao || ""} 
               className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]" 
-              placeholder="Descreva o que foi conversado ou o motivo da alteração..."
+              placeholder="Descreva o que foi conversado..."
               onChange={(e) => setFormData(prev => ({...prev, comentarioAcao: e.target.value}))} 
             />
           </div>
