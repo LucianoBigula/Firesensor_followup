@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FollowUp } from "@/types/follow-up";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
-import { User, Trash2, Pencil, ArrowRightCircle, AlertTriangle, Calendar, Clock, FileText } from "lucide-react";
+import { User, Trash2, Pencil, ArrowRightCircle, AlertTriangle, Calendar, Clock, FileText, Phone, Mail, Info } from "lucide-react";
 import { FollowUpForm } from "./FollowUpForm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { base64ToBlob } from "@/utils/file-utils";
@@ -134,7 +134,23 @@ export const FollowUpTable = ({ data, allFollowUps, onDelete, onUpdate }: Follow
                           </TooltipProvider>
                         )}
                       </div>
-                      <span className="text-xs text-zinc-200 font-semibold">{item.integrador}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-zinc-200 font-semibold">{item.integrador}</span>
+                        {(item.responsavel || item.telefone || item.email) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-zinc-500 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-zinc-800 border-zinc-700 text-white p-3 space-y-2">
+                                {item.responsavel && <div className="flex items-center gap-2 text-xs"><User className="h-3 w-3 text-zinc-400" /> {item.responsavel}</div>}
+                                {item.telefone && <div className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3 text-zinc-400" /> {item.telefone}</div>}
+                                {item.email && <div className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3 text-zinc-400" /> {item.email}</div>}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <span className="text-[10px] text-zinc-500 uppercase">{item.obra}</span>
                     </div>
                   </TableCell>

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FollowUp, Temperatura, Expectativa, Status, DiaSemana, SemanaMes } from "@/types/follow-up";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, FileText, X, Paperclip } from "lucide-react";
+import { PlusCircle, FileText, X, Paperclip, User, Phone, Mail } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast";
 import { fileToBase64, validatePdfFile } from "@/utils/file-utils";
 import { normalizeText } from "@/lib/utils";
@@ -95,12 +95,9 @@ export const FollowUpForm = ({ onSave, initialData, trigger, existingFollowUps =
       return;
     }
 
-    // Validação de duplicidade de número de proposta
     const cleanNewNumber = normalizeText(formData.numeroProposta || "").replace(/#/g, '');
     const isDuplicate = existingFollowUps.some(item => {
-      // Se estiver editando, ignora o próprio item
       if (initialData && item.id === initialData.id) return false;
-      
       const cleanExistingNumber = normalizeText(item.numeroProposta || "").replace(/#/g, '');
       return cleanExistingNumber === cleanNewNumber;
     });
@@ -110,7 +107,6 @@ export const FollowUpForm = ({ onSave, initialData, trigger, existingFollowUps =
       return;
     }
 
-    // Validação de comentário obrigatório
     if (!formData.comentarioAcao?.trim()) {
       showError("O comentário da última ação é obrigatório.");
       return;
@@ -171,8 +167,29 @@ export const FollowUpForm = ({ onSave, initialData, trigger, existingFollowUps =
             <Input required value={formData.integrador || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, integrador: e.target.value}))} />
           </div>
           <div className="space-y-2">
+            <Label className="text-zinc-400">Responsável</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+              <Input value={formData.responsavel || ""} className="pl-10 bg-zinc-800 border-zinc-700 text-white" placeholder="Nome do contato" onChange={(e) => setFormData(prev => ({...prev, responsavel: e.target.value}))} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">Telefone</Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+              <Input value={formData.telefone || ""} className="pl-10 bg-zinc-800 border-zinc-700 text-white" placeholder="(00) 00000-0000" onChange={(e) => setFormData(prev => ({...prev, telefone: e.target.value}))} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-zinc-400">E-mail</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+              <Input type="email" value={formData.email || ""} className="pl-10 bg-zinc-800 border-zinc-700 text-white" placeholder="contato@empresa.com" onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
+            </div>
+          </div>
+          <div className="col-span-1 md:col-span-2 space-y-2">
             <Label className="text-zinc-400">Obra (Opcional)</Label>
-            <Input value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
+            <Input value={formData.obra || ""} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Nome ou local da obra" onChange={(e) => setFormData(prev => ({...prev, obra: e.target.value}))} />
           </div>
 
           <div className="col-span-1 md:col-span-2 border-b border-zinc-800 pb-2 mt-4 mb-2">
